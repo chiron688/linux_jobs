@@ -1,0 +1,252 @@
+#以下所有都复制到vps里面运行
+cat > /etc/systemd/system/zhuigeng.service <<EOF
+[Unit]
+Description=zhuigeng
+AssertPathIsDirectory=/home/.zhuigeng
+After=network-online.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/plexdrive mount \
+-c /home/.zhuigeng \
+-o allow_other \
+-v 4 --refresh-interval=1m \
+--chunk-check-threads=4 \
+--chunk-load-threads=4 \
+--chunk-load-ahead=4 \
+--max-chunks=20 \
+--drive-id=0ADk4xa7fvz1HUk9PVA \
+/mnt/zhuigeng
+
+[Install]
+WantedBy=default.target
+EOF
+
+
+
+cat > /etc/systemd/system/guochanju.service <<EOF
+[Unit]
+Description=guochanju
+AssertPathIsDirectory=/home/.guochanju 
+After=network-online.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/plexdrive mount \
+-c /home/.guochanju \
+-o allow_other \
+-v 4 --refresh-interval=1m \
+--chunk-check-threads=4 \
+--chunk-load-threads=4 \
+--chunk-load-ahead=4 \
+--max-chunks=20 \
+--drive-id=0AK3kdnoFRVVnUk9PVA \
+/mnt/guochanju
+
+[Install]
+WantedBy=default.target
+EOF
+
+cat > /etc/systemd/system/rihanju.service <<EOF
+[Unit]
+Description=rihanju
+AssertPathIsDirectory=/home/.rihanju
+After=network-online.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/plexdrive mount \
+-c /home/.rihanju \
+-o allow_other \
+-v 4 --refresh-interval=1m \
+--chunk-check-threads=4 \
+--chunk-load-threads=4 \
+--chunk-load-ahead=4 \
+--max-chunks=20 \
+--drive-id=0AH8fjkAThBW4Uk9PVA \
+/mnt/rihanju
+
+[Install]
+WantedBy=default.target
+EOF
+
+cat > /etc/systemd/system/rihanju.service <<EOF
+[Unit]
+Description=rihanju
+AssertPathIsDirectory=/home/.oumeiju
+After=network-online.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/plexdrive mount \
+-c /home/.oumeiju \
+-o allow_other \
+-v 4 --refresh-interval=1m \
+--chunk-check-threads=4 \
+--chunk-load-threads=4 \
+--chunk-load-ahead=4 \
+--max-chunks=20 \
+--drive-id=0AJg46Tk21R9QUk9PVA \
+/mnt/oumeiju
+
+[Install]
+WantedBy=default.target
+EOF
+
+cat > /etc/systemd/system/jilupian.service <<EOF
+[Unit]
+Description=jilupian
+AssertPathIsDirectory=/home/.jilupian
+After=network-online.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/plexdrive mount \
+-c /home/.jilupian \
+-o allow_other \
+-v 4 --refresh-interval=1m \
+--chunk-check-threads=4 \
+--chunk-load-threads=4 \
+--chunk-load-ahead=4 \
+--max-chunks=20 \
+--drive-id=0AIRN1BSMDs5ZUk9PVA \
+/mnt/jilupian
+
+[Install]
+WantedBy=default.target
+EOF
+
+cat > /etc/systemd/system/dianyingag.service <<EOF
+[Unit]
+Description=dianyingag
+AssertPathIsDirectory=/home/.dianyingag
+After=network-online.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/plexdrive mount \
+-c /home/.dianyingag \
+-o allow_other \
+-v 4 --refresh-interval=1m \
+--chunk-check-threads=4 \
+--chunk-load-threads=4 \
+--chunk-load-ahead=4 \
+--max-chunks=20 \
+--drive-id=0ANEPcDeUHdrNUk9PVA \
+/mnt/dianyingag
+
+[Install]
+WantedBy=default.target
+EOF
+
+cat > /etc/systemd/system/dianyinhn.service <<EOF
+[Unit]
+Description=dianyinghn
+AssertPathIsDirectory=/home/.dianyinghn
+After=network-online.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/plexdrive mount \
+-c /home/.dianyinghn \
+-o allow_other \
+-v 4 --refresh-interval=1m \
+--chunk-check-threads=4 \
+--chunk-load-threads=4 \
+--chunk-load-ahead=4 \
+--max-chunks=20 \
+--drive-id=0AHpuRhtsWue1Uk9PVA \
+/mnt/dianyinghn
+
+[Install]
+WantedBy=default.target
+EOF
+
+cat > /etc/systemd/system/dianyingot.service <<EOF
+[Unit]
+Description=dianyingot
+AssertPathIsDirectory=/home/.dianyingot
+After=network-online.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/plexdrive mount \
+-c /home/.dianyingot \
+-o allow_other \
+-v 4 --refresh-interval=1m \
+--chunk-check-threads=4 \
+--chunk-load-threads=4 \
+--chunk-load-ahead=4 \
+--max-chunks=20 \
+--drive-id=0ALBgic6vqAEEUk9PVA \
+/mnt/dianyingot
+
+[Install]
+WantedBy=default.target
+EOF
+
+cat > /etc/systemd/system/dianyinguz.service <<EOF
+[Unit]
+Description=dianyinguz
+AssertPathIsDirectory=/home/.dianyinguz
+After=network-online.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/plexdrive mount \
+-c /home/.dianyinguz \
+-o allow_other \
+-v 4 --refresh-interval=1m \
+--chunk-check-threads=4 \
+--chunk-load-threads=4 \
+--chunk-load-ahead=4 \
+--max-chunks=20 \
+--drive-id=0AE0iCZwRfuCqUk9PVA \
+/mnt/dianyinguz
+
+
+[Install]
+WantedBy=default.target
+EOF
+
+cat > /etc/systemd/system/dongman.service <<EOF
+[Unit]
+Description=dongman
+AssertPathIsDirectory=/home/.dongman
+After=network-online.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/plexdrive mount \
+-c /home/.dongman \
+-o allow_other \
+-v 4 --refresh-interval=1m \
+--chunk-check-threads=4 \
+--chunk-load-threads=4 \
+--chunk-load-ahead=4 \
+--max-chunks=20 \
+--drive-id=0AGjxWjJ63GxKUk9PVA \
+/mnt/dongman
+
+[Install]
+WantedBy=default.target
+EOF
+
+systemctl start zhuigeng
+systemctl enable zhuigeng
+systemctl start guochanju
+systemctl enable guochanju
+systemctl start oumeiju
+systemctl enable oumeiju
+systemctl start jilupian
+systemctl enable jilupian
+systemctl start dianyingag
+systemctl enable dianyingag
+systemctl start dianyinghn
+systemctl enable dianyinghn
+systemctl start dianyingot
+systemctl enable dianyingot
+systemctl start dianyinguz
+systemctl enable dianyinguz
+systemctl start dongman
+systemctl enable dongman
