@@ -1,0 +1,5 @@
+#!/bin/bash
+#需配合sa
+gclone copy putongdianying:{1-1ch8A3g75_oXh30zC-lOtYnoU2r1mWp} gerenpan:{1XH2gg1clY3w66se7Ja7M-2VZpLPUj9vM} -P --daemon
+gclone copy mianfeipan:{1xOKT2miC6dNDti5qLUXVyyacPxPdv6RS} gerenpan:{13jJYZj76GCOy1_bdO-7mOcA9mJz5NRNl} -P --daemon
+gclone copy mianfeipan:{1bNJIuZmw-EfooqtmpuJgDsuphhto0iHd} gerenpan:{1ZRZGYDndGXw_r6A4dInKxQ-2jJz9xZuq} -P --daemon
