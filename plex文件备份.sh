@@ -16,7 +16,7 @@ zip -r plexmediaserver.zip plexmediaserver
 #vfs-read-chunk-size-limit 3G：分块读取大小，这里设置的是3G，可提高文件读的效率，比如1G的文件，大致分为10个块进行读取，但与此同时API请求次数也会增多
 #--buffer-size 100M：内存缓存，如果您内存比较小，可降低此值，如果内存比较大，可适当提高
 #--daemon：指后台方式运行
-#上传命令
+#上传命令，上传到指定文件夹并以上传时间进行保存
 gclone move /var/lib/plexmediaserver.zip /home/backen/backen/$(date +%Y-%m-%d) --transfers 32 -P
 cd /home
 #下面这个压缩语句有点毛病，有空再改个，大概就是压缩文件夹里面的内容，除了backen的文件夹，因为这是挂载的文件夹
