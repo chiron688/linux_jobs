@@ -19,5 +19,5 @@ zip -r plexmediaserver.zip plexmediaserver
 #上传命令
 gclone move /var/lib/plexmediaserver.zip /home/backen/backen/$(date +%Y-%m-%d) --transfers 32 -P
 cd /home
-#下面这个压缩语句有点毛病，有空再改个
+#下面这个压缩语句有点毛病，有空再改个，大概就是压缩文件夹里面的内容，除了backen的文件夹，因为这是挂载的文件夹
 #zip -r guazaiwenjian.zip /home -x='/home/backen/'
