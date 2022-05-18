@@ -1,4 +1,4 @@
-#以下所有都复制到vps里面运行
+#以下所有都复制到vps里面运行，从cat开始，到EOF结束
 cat > /etc/systemd/system/zhuigeng.service <<EOF
 [Unit]
 Description=zhuigeng
