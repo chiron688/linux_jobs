@@ -4,7 +4,7 @@ cd /var/lib
 #压缩plexmediaserver，就是plex的数据存储文件夹
 zip -r plexmediaserver.zip plexmediaserver
 #上传到谷歌云盘，前提是必须用gclone挂载好
-#glone mount gerenpan:/ /home/backen --allow-other --attr-timeout 30m --vfs-cache-mode full --vfs-cache-max-age 6h --vfs-cache-max-size 3G --vfs-read-chunk-size-limit 3G --buffer-size 100M --daemon
+#gclone mount gerenpan:/ /media/backen --allow-other --attr-timeout 30m --vfs-cache-mode full --vfs-cache-max-age 6h --vfs-cache-max-size 3G --vfs-read-chunk-size-limit 3G --buffer-size 100M --daemon
 #gclone mount：是gclone挂载命令
 #gerenpan:/ ：上面已经提到，提前配置好google Drive，并将名称命名为gerenpan，gerenpan:/则是google Drive上的路径
 #//home/backen:为本地文件夹路径（建议为空目录）
@@ -17,7 +17,8 @@ zip -r plexmediaserver.zip plexmediaserver
 #--buffer-size 100M：内存缓存，如果您内存比较小，可降低此值，如果内存比较大，可适当提高
 #--daemon：指后台方式运行
 #上传命令，上传到指定文件夹并以上传时间进行保存
-gclone move /var/lib/plexmediaserver.zip /home/backen/backen/$(date +%Y-%m-%d) --transfers 32 -P
+gclone move /var/lib/plexmediaserver.zip /media/backen/backen/$(date +%Y-%m-%d)plex数据备份 --transfers 32 -P
 cd /home
-#下面这个压缩语句有点毛病，有空再改个，大概就是压缩文件夹里面的内容，除了backen的文件夹，因为这是挂载的文件夹
-#zip -r guazaiwenjian.zip /home -x='/home/backen/'
+#压缩文件夹
+zip -r guazaiwenjian.zip /home/
+gclone move /var/lib/plexmediaserver.zip /media/backen/backen/$(date +%Y-%m-%d)挂载文件备份 --transfers 32 -P
