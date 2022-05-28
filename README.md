@@ -8,7 +8,7 @@
 还有一些自动运行的脚本类型的
 
 就当作备份了
-
+bbr算法推荐：bash <(curl -Lso- https://git.io/kernel.sh)
 
 使用方法
 
