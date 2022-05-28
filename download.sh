@@ -27,6 +27,6 @@ rpm -ivh plexmediaserver*.rpm
 cd /var/lib
 rm -rf plexmediaserver
 gclone copy gerenpan:/backen/plex.tar.gz /var/lib -P
-tar –xzf plex.tar.gz
+tar -xf plex.tar.gz
 mv /var/lib/var/lib/plexmediaserver /var/lib
 
