@@ -7,7 +7,7 @@ yum -y install fuse
 yum -y install screen
 yum -y install tar
 bash <(wget -qO- https://git.io/gclone.sh)
-wget https://github.com/chiron688/linux_jobs/blob/main/rclone.config
+wget https://raw.githubusercontent.com/chiron688/linux_jobs/master/rclone.config
 mv rclone.config /root/.config/rclone/
 cd /mnt
 mkdirs dianyingag/dianyinghn/dianyingot/dianyinguz/dongman/guochanju/jilupian/oumeiju/rihanju/zhuigeng
