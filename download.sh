@@ -26,7 +26,7 @@ wget https://downloads.plex.tv/plex-media-server-new/1.26.2.5797-5bd057d2b/redha
 rpm -ivh plexmediaserver-1.26.2.5797-5bd057d2b.x86_64.rpm
 cd /var/lib
 rm -rf plexmediaserver
-screen glcone copy gerenpan:/backen/plex.tar.gz /var/lib -P
-screen tar –xzf plex.tar.gz
+glcone copy gerenpan:/backen/plex.tar.gz /var/lib -P
+tar –xzf plex.tar.gz
 mv /var/lib/var/lib/plexmediaserver /var/lib
 
