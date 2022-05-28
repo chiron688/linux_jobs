@@ -23,7 +23,7 @@ gclone mount rihan:/ /mnt/rihanju --config /root/.config/rclone/rclone.conf --vf
 gclone mount zhuigeng:/ /mnt/zhuigeng --config /root/.config/rclone/rclone.conf --vfs-cache-mode writes --use-mmap --daemon-timeout=10m --vfs-read-chunk-size 10M --vfs-read-chunk-size-limit 512M --cache-dir /home/rclone/vfs_cache --allow-other --drive-chunk-size 128M --log-level INFO --log-file /var/log/rclone.log --timeout 1h --umask 002 --daemon
 cd /root 
 wget https://downloads.plex.tv/plex-media-server-new/1.26.2.5797-5bd057d2b/redhat/plexmediaserver-1.26.2.5797-5bd057d2b.x86_64.rpm
-rpm -ivh plexmediaserver-1.26.2.5797-5bd057d2b.x86_64.rpm
+rpm -ivh plexmediaserver*.rpm
 cd /var/lib
 rm -rf plexmediaserver
 glcone copy gerenpan:/backen/plex.tar.gz /var/lib -P
