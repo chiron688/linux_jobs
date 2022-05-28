@@ -10,7 +10,7 @@ bash <(wget -qO- https://git.io/gclone.sh)
 wget https://raw.githubusercontent.com/chiron688/linux_jobs/master/rclone.config
 mv rclone.config /root/.config/rclone/
 cd /mnt
-mkdirs dianyingag/dianyinghn/dianyingot/dianyinguz/dongman/guochanju/jilupian/oumeiju/rihanju/zhuigeng
+mkdir dianyingag/dianyinghn/dianyingot/dianyinguz/dongman/guochanju/jilupian/oumeiju/rihanju/zhuigeng
 gclone mount dianyingag:/ /mnt/dianyingag --config /root/.config/rclone/rclone.conf --vfs-cache-mode writes --use-mmap --daemon-timeout=10m --vfs-read-chunk-size 10M --vfs-read-chunk-size-limit 512M --cache-dir /home/rclone/vfs_cache --allow-other --drive-chunk-size 128M --log-level INFO --log-file /var/log/rclone.log --timeout 1h --umask 002 --daemon
 gclone mount dianyinghn:/ /mnt/dianyinghn --config /root/.config/rclone/rclone.conf --vfs-cache-mode writes --use-mmap --daemon-timeout=10m --vfs-read-chunk-size 10M --vfs-read-chunk-size-limit 512M --cache-dir /home/rclone/vfs_cache --allow-other --drive-chunk-size 128M --log-level INFO --log-file /var/log/rclone.log --timeout 1h --umask 002 --daemon
 gclone mount dianyingot:/ /mnt/dianyingot --config /root/.config/rclone/rclone.conf --vfs-cache-mode writes --use-mmap --daemon-timeout=10m --vfs-read-chunk-size 10M --vfs-read-chunk-size-limit 512M --cache-dir /home/rclone/vfs_cache --allow-other --drive-chunk-size 128M --log-level INFO --log-file /var/log/rclone.log --timeout 1h --umask 002 --daemon
