@@ -12,8 +12,11 @@ bbr算法推荐：bash <(curl -Lso- https://git.io/kernel.sh)
 
 编译bbr+fq算法
 echo "net.core.default_qdisc=fq" >> /etc/sysctl.conf
+
 echo "net.ipv4.tcp_congestion_control=bbr" >> /etc/sysctl.conf
+
 sysctl -p
+
 lsmod | grep bbr
 
 使用方法
