@@ -70,6 +70,6 @@ sysctl -p
 
 lsmod | grep bbr
 
-使用方法
+测速脚本
 
-wget https://raw.githubusercontent.com/chiron688/linux_jobs/master/download.sh && chmod +x download.sh && ./download.sh
+wget https://raw.githubusercontent.com/chiron688/linux_jobs/speed.sh && chmod +x speed.sh && ./speed.sh
