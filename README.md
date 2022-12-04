@@ -73,3 +73,5 @@ lsmod | grep bbr
 测速脚本
 
 wget -O speed.sh "https://raw.githubusercontent.com/chiron688/linux_jobs/main/speed.sh" && chmod +x speed.sh && ./speed.sh
+or
+bash <(wget -qO- https://raw.githubusercontent.com/chiron688/linux_jobs/main/speed.sh)
