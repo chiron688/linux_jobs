@@ -1,15 +1,7 @@
 # linux_jobs
-个人自用linux脚本
+个人自用linux脚本就当作备份了
 
-想到加点什么就加什么
-
-一般都是关于plex 的
-
-还有一些自动运行的脚本类型的
-
-就当作备份了
-
-bbr算法推荐：
+1、bbr算法推荐：
 {
 预先准备
 centos：yum install ca-certificates wget -y && update-ca-trust force-enable
@@ -17,6 +9,7 @@ debian/ubuntu：apt-get install ca-certificates wget -y && update-ca-certificate
 
 不卸载内核版本
 wget -O tcpx.sh "https://github.com/ylx2016/Linux-NetSpeed/raw/master/tcpx.sh" && chmod +x tcpx.sh && ./tcpx.sh
+
 卸载内核版本
 wget -O tcp.sh "https://github.com/ylx2016/Linux-NetSpeed/raw/master/tcp.sh" && chmod +x tcp.sh && ./tcp.sh
 
@@ -43,8 +36,10 @@ grubby --info=ALL|awk -F= '$1=="kernel" {print i++ " : " $2}'
 
 查看当前支持TCP算法
 cat /proc/sys/net/ipv4/tcp_allowed_congestion_control
+
 查看当前运行的算法
 cat /proc/sys/net/ipv4/tcp_congestion_control
+
 查看当前队列算法
 sysctl net.core.default_qdisc
 
@@ -62,6 +57,7 @@ sysctl --system
 }
 
 编译bbr+fq算法
+
 echo "net.core.default_qdisc=fq" >> /etc/sysctl.conf
 
 echo "net.ipv4.tcp_congestion_control=bbr" >> /etc/sysctl.conf
@@ -73,5 +69,7 @@ lsmod | grep bbr
 测速脚本
 
 wget -O speed.sh "https://raw.githubusercontent.com/chiron688/linux_jobs/main/speed.sh" && chmod +x speed.sh && ./speed.sh
+
 or
+
 bash <(wget -qO- https://raw.githubusercontent.com/chiron688/linux_jobs/main/speed.sh)
