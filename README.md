@@ -66,7 +66,7 @@ sysctl -p
 
 lsmod | grep bbr
 
-测速脚本
+测速脚本（31 电信 +30 联通（无南京）+31移动，共 92 节点，预期 60~80 分钟完成）
 
 wget -O speed.sh "https://raw.githubusercontent.com/chiron688/linux_jobs/main/speed.sh" && chmod +x speed.sh && ./speed.sh
 
