@@ -71,5 +71,5 @@ sysctl -p
 lsmod | grep bbr
 
 测速脚本
-
+wget -O speed.sh "https://raw.githubusercontent.com/chiron688/linux_jobs/master/speed.sh" && chmod +x speed.sh && ./speed.sh
 wget https://raw.githubusercontent.com/chiron688/linux_jobs/speed.sh && chmod +x speed.sh && ./speed.sh
