@@ -7,23 +7,81 @@ PURPLE="\033[0;35m"
 CYAN='\033[0;36m'
 ENDC='\033[0m'
 
-check_wget() {
-    if  [ ! -e '/usr/bin/wget' ]; then
-        echo "请先安装 wget" && exit 1
-    fi
+checkroot(){
+	[[ $EUID -ne 0 ]] && echo -e "${RED}请使用 root 用户运行本脚本！${PLAIN}" && exit 1
 }
 
-check_bimc() {
-    if  [ ! -e './bimc' ]; then
-        echo "正在获取组件"
-        arch=$(uname -m)
-        if [ "${arch}" == "i686" ]; then
-            arch="i586"
-        fi
-        wget --no-check-certificate -qO bimc https://bench.im/bimc > /dev/null 2>&1
-        chmod +x bimc
-    fi
+checksystem() {
+	if [ -f /etc/redhat-release ]; then
+	    release="centos"
+	elif cat /etc/issue | grep -Eqi "debian"; then
+	    release="debian"
+	elif cat /etc/issue | grep -Eqi "ubuntu"; then
+	    release="ubuntu"
+	elif cat /etc/issue | grep -Eqi "centos|red hat|redhat"; then
+	    release="centos"
+	elif cat /proc/version | grep -Eqi "debian"; then
+	    release="debian"
+	elif cat /proc/version | grep -Eqi "ubuntu"; then
+	    release="ubuntu"
+	elif cat /proc/version | grep -Eqi "centos|red hat|redhat"; then
+	    release="centos"
+	fi
 }
+
+checkpython() {
+	if  [ ! -e '/usr/bin/python' ]; then
+	        echo "正在安装 Python"
+	            if [ "${release}" == "centos" ]; then
+	            		yum update > /dev/null 2>&1
+	                    yum -y install python > /dev/null 2>&1
+	                else
+	                	apt-get update > /dev/null 2>&1
+	                    apt-get -y install python > /dev/null 2>&1
+	                fi
+	        
+	fi
+}
+
+checkcurl() {
+	if  [ ! -e '/usr/bin/curl' ]; then
+	        echo "正在安装 Curl"
+	            if [ "${release}" == "centos" ]; then
+	                yum update > /dev/null 2>&1
+	                yum -y install curl > /dev/null 2>&1
+	            else
+	                apt-get update > /dev/null 2>&1
+	                apt-get -y install curl > /dev/null 2>&1
+	            fi
+	fi
+}
+
+checkwget() {
+	if  [ ! -e '/usr/bin/wget' ]; then
+	        echo "正在安装 Wget"
+	            if [ "${release}" == "centos" ]; then
+	                yum update > /dev/null 2>&1
+	                yum -y install wget > /dev/null 2>&1
+	            else
+	                apt-get update > /dev/null 2>&1
+	                apt-get -y install wget > /dev/null 2>&1
+	            fi
+	fi
+}
+
+checkspeedtest() {
+	if  [ ! -e './speedtest-cli/speedtest' ]; then
+		echo "正在安装 Speedtest-cli"
+                arch=$(uname -m)
+                if [ "${arch}" == "i686" ]; then
+                    arch="i386"
+                fi
+		wget --no-check-certificate -qO speedtest.tgz https://cdn.jsdelivr.net/gh/oooldking/script@1.1.7/speedtest_cli/ookla-speedtest-1.0.0-${arch}-linux.tgz > /dev/null 2>&1
+		# wget --no-check-certificate -qO speedtest.tgz https://bintray.com/ookla/download/download_file?file_path=ookla-speedtest-1.0.0-${arch}-linux.tgz > /dev/null 2>&1
+	fi
+	mkdir -p speedtest-cli && tar zxvf speedtest.tgz -C ./speedtest-cli/ > /dev/null 2>&1 && chmod a+rx ./speedtest-cli/speedtest
+}
+
 
 print_info() {
     echo "——————————————————————————————————————————————————————————————————————"
