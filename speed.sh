@@ -116,23 +116,32 @@ get_options() {
 
 
 speed_test(){
-    local nodeType=$1
-    local nodeLocation=$2
-    local nodeISP=$3
-    local extra=$4
-    local server=$(echo "$5"| base64 -d)
-    local name=$(./bimc "$nodeLocation" -n)
-
-    printf "\r${GREEN}%-7s${YELLOW}%s%s${GREEN}%s${CYAN}%s%-11s${CYAN}%s%-11s${GREEN}%-9s${PURPLE}%-7s${ENDC}" "${nodeType}"  "${nodeISP}" "|" "${name}" "↑ " "..." "↓ " "..." "..." "..."
-
-    output=$(./bimc $server $ul$thread $extra)
-    local upload="$(echo "$output" | cut -n -d ',' -f1)"
-    local download="$(echo "$output" | cut -n -d ',' -f2)"
-    local latency="$(echo "$output" | cut -n -d ',' -f3)"
-    local jitter="$(echo "$output" | cut -n -d ',' -f4)"
-            
-    printf "\r${GREEN}%-7s${YELLOW}%s%s${GREEN}%s${CYAN}%s%s${CYAN}%s%s${GREEN}%s${PURPLE}%s${ENDC}\n" "${nodeType}"  "${nodeISP}" "|" "${name}" "↑ " "${upload}" "↓ " "${download}" "${latency}" "${jitter}"
+	speedLog="./speedtest.log"
+	true > $speedLog
+		speedtest-cli/speedtest -p no -s $1 --accept-license > $speedLog 2>&1
+		is_upload=$(cat $speedLog | grep 'Upload')
+		if [[ ${is_upload} ]]; then
+	        local REDownload=$(cat $speedLog | awk -F ' ' '/Download/{print $3}')
+	        local reupload=$(cat $speedLog | awk -F ' ' '/Upload/{print $3}')
+	        local relatency=$(cat $speedLog | awk -F ' ' '/Latency/{print $2}')
+	        
+			local nodeID=$1
+			local nodeLocation=$2
+			local nodeISP=$3
+			
+			strnodeLocation="${nodeLocation}　　　　　　"
+			LANG=C
+			#echo $LANG
+			
+			temp=$(echo "${REDownload}" | awk -F ' ' '{print $1}')
+	        if [[ $(awk -v num1=${temp} -v num2=0 'BEGIN{print(num1>num2)?"1":"0"}') -eq 1 ]]; then
+	        	printf "${RED}%-6s${YELLOW}%s%s${GREEN}%-24s${CYAN}%s%-10s${BLUE}%s%-10s${PURPLE}%-8s${PLAIN}\n" "${nodeID}"  "${nodeISP}" "|" "${strnodeLocation:0:24}" "↑ " "${reupload}" "↓ " "${REDownload}" "${relatency}" | tee -a $log
+			fi
+		else
+	        local cerror="ERROR"
+		fi
 }
+	
 
 run_test() {
     [[ ${selection} == 2 ]] && exit 1
