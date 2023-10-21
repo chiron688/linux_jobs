@@ -1,9 +1,10 @@
 # linux_jobs
 
 个人自用linux脚本就当作备份了
+
 tiktok 解锁检测：
 ```shell
-bash <(wget -qO- https://down.vpsaff.net/linux/speedtest/superbench.sh) -f
+wget -O tcpx.sh "https://github.com/chiron688/linux_jobs/blob/main/tiktok.sh" && chmod +x tcpx.sh && ./tcpx.sh
 ```
 
 bbr算法推荐：
