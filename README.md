@@ -4,7 +4,7 @@
 
 tiktok 解锁检测：
 ```shell
-wget -O tcpx.sh "https://github.com/chiron688/linux_jobs/blob/main/tiktok.sh" && chmod +x tcpx.sh && ./tcpx.sh
+wget -O tiktok.sh "https://github.com/chiron688/linux_jobs/blob/main/tiktok.sh" && chmod +x tcpx.sh && ./tcpx.sh
 ```
 
 bbr算法推荐：
