@@ -1,6 +1,10 @@
 # linux_jobs
 
 个人自用linux脚本就当作备份了
+tiktok 解锁检测：
+```shell
+bash <(wget -qO- https://down.vpsaff.net/linux/speedtest/superbench.sh) -f
+```
 
 bbr算法推荐：
 预先准备:
