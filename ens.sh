@@ -75,8 +75,8 @@ configure_network() {
     local table=$2
     local network=$3
 
-    echo "/sbin/ip rout add default via $gateway table $table"
-    echo "/sbin/ip rule add from $network table $table"
+    /sbin/ip rout add default via $gateway table $table
+    /sbin/ip rule add from $network table $table
 }
 
 # 计算网关和网络地址
