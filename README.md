@@ -4,7 +4,12 @@
 
 tiktok 解锁检测：
 ```shell
-wget -O tiktok.sh "https://fastly.jsdelivr.net/gh/chiron688/linux_jobs@main/tiktok.sh" && chmod +x tiktok.sh && ./tiktok.sh
+ bash <(curl -L -s raw.githubusercontent.com/chiron688/linux_jobs/main/tiktok.sh)
+```
+
+iepl 路由一键脚本
+```shell
+bash <(curl -L -s raw.githubusercontent.com/chiron688/linux_jobs/main/ens.sh)
 ```
 
 bbr算法推荐：
