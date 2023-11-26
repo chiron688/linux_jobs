@@ -75,7 +75,7 @@ configure_network() {
     local table=$2
     local network=$3
 
-    echo "/sbin/ip route add default via $gateway table $table"
+    echo "/sbin/ip rout add default via $gateway table $table"
     echo "/sbin/ip rule add from $network table $table"
 }
 
