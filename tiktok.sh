@@ -1,11 +1,5 @@
 #!/bin/bash
 shopt -s expand_aliases
-
-# 常量
-UA_Browser="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.87 Safari/537.36"
-local_ipv4=$(curl $useNIC -4 -s --max-time 10 api64.ipify.org)
-local_ipv4_asterisk=$(awk -F"." '{print $1"."$2".*.*"}' <<<"${local_ipv4}")
-local_isp4=$(curl $useNIC -s -4 -A $UA_Browser --max-time 10 https://api.ip.sb/geoip/${local_ipv4} | grep organization | cut -f4 -d '"')
 Font_Black="\033[30m"
 Font_Red="\033[31m"
 Font_Green="\033[32m"
@@ -14,33 +8,8 @@ Font_Blue="\033[34m"
 Font_Purple="\033[35m"
 Font_SkyBlue="\033[36m"
 Font_White="\033[37m"
-Font_Suffix="\033[0m
+Font_Suffix="\033[0m"
 
-# 检测curl是否安装
-if ! command -v curl &> /dev/null; then
-  echo "curl is not installed. Installing curl..."
-  if command -v yum &> /dev/null; then
-    sudo yum install curl -y
-  elif command -v apt-get &> /dev/null; then
-    sudo apt-get install curl -y
-  else
-    echo "Your system package manager is not supported. Please install curl manually."
-    exit 1
-  fi
-fi
-
-# 检测grep是否安装
-if ! command -v grep &> /dev/null; then
-  echo "grep is not installed. Installing grep..."
-  if command -v yum &> /dev/null; then
-    sudo yum install grep -y
-  elif command -v apt-get &> /dev/null; then
-    sudo apt-get install grep -y
-  else
-    echo "Your system package manager is not supported. Please install grep manually."
-    exit 1
-  fi
-fi
 while getopts ":I:" optname; do
     case "$optname" in
     "I")
@@ -67,6 +36,8 @@ checkOS(){
         fi
     fi        
 }
+checkOS
+
 if [ -z "$iface" ]; then
     useNIC=""
 fi
@@ -74,6 +45,13 @@ fi
 if ! mktemp -u --suffix=RRC &>/dev/null; then
     is_busybox=1
 fi
+
+UA_Browser="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.87 Safari/537.36"
+
+
+local_ipv4=$(curl $useNIC -4 -s --max-time 10 api64.ipify.org)
+local_ipv4_asterisk=$(awk -F"." '{print $1"."$2".*.*"}' <<<"${local_ipv4}")
+local_isp4=$(curl $useNIC -s -4 -A $UA_Browser --max-time 10 https://api.ip.sb/geoip/${local_ipv4} | grep organization | cut -f4 -d '"')
 
 function MediaUnlockTest_Tiktok_Region() {
     echo -n -e " Tiktok Region:\t\t\c"
@@ -108,15 +86,21 @@ function Heading() {
     echo ""
 
 }
+
+clear
+
 function ScriptTitle() {
     echo -e "${Font_SkyBlue}【Tiktok区域检测】${Font_Suffix}"
     echo ""
     echo -e " ** 测试时间: $(date)"
     echo ""
 }
+ScriptTitle
+
 function RunScript() {
-    ScriptTitle
     Heading
     MediaUnlockTest_Tiktok_Region
 
 }
+
+RunScript
