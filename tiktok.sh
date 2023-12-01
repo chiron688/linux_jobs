@@ -84,7 +84,6 @@ function Heading() {
     echo -e " ${Font_SkyBlue}** 您的网络为: ${local_isp4} (${local_ipv4_asterisk})${Font_Suffix} "
     echo "******************************************"
     echo ""
-
 }
 
 clear
