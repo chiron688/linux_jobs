@@ -1,11 +1,20 @@
 #!/bin/bash
+shopt -s expand_aliases
 
 # 常量
-BrowserUA="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-PLAIN='\033[0m'
-Yellow="\033[33m";
+UA_Browser="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.87 Safari/537.36"
+local_ipv4=$(curl $useNIC -4 -s --max-time 10 api64.ipify.org)
+local_ipv4_asterisk=$(awk -F"." '{print $1"."$2".*.*"}' <<<"${local_ipv4}")
+local_isp4=$(curl $useNIC -s -4 -A $UA_Browser --max-time 10 https://api.ip.sb/geoip/${local_ipv4} | grep organization | cut -f4 -d '"')
+Font_Black="\033[30m"
+Font_Red="\033[31m"
+Font_Green="\033[32m"
+Font_Yellow="\033[33m"
+Font_Blue="\033[34m"
+Font_Purple="\033[35m"
+Font_SkyBlue="\033[36m"
+Font_White="\033[37m"
+Font_Suffix="\033[0m
 
 # 检测curl是否安装
 if ! command -v curl &> /dev/null; then
@@ -32,25 +41,84 @@ if ! command -v grep &> /dev/null; then
     exit 1
   fi
 fi
+while getopts ":I:" optname; do
+    case "$optname" in
+    "I")
+        iface="$OPTARG"
+        useNIC="--interface $iface"
+        ;;
+    ":")
+        echo "Unknown error while processing options"
+        exit 1
+        ;;
+    esac
 
-# 检查TikTok解锁状态的函数
-UnlockTiktokTest() {
-    local result=$(curl --user-agent "${BrowserUA}" -fsSL --max-time 10 "https://www.tiktok.com/" 2>&1)
-    if [[ "$result" != "curl"* ]]; then
-        result="$(echo ${result} | grep 'region' | awk -F 'region":"' '{print $2}' | awk -F '"' '{print $1}')"
-        if [ -n "$result" ]; then
-            if [[ "$result" == "The #TikTokTraditions"* ]] || [[ "$result" == "This LIVE isn't available"* ]]; then
-                echo -e " TikTok               : ${RED}No${PLAIN}"
-            else
-                echo -e " TikTok               : ${GREEN}Yes (Region: ${result})${PLAIN}"
-            fi
-        else
-            echo -e " TikTok               : ${RED}Failed${PLAIN}"
-            return
+done
+
+checkOS(){
+    ifCentOS=$(cat /etc/os-release | grep CentOS)
+    if [ -n "$ifCentOS" ];then
+        OS_Version=$(cat /etc/os-release | grep REDHAT_SUPPORT_PRODUCT_VERSION | cut -f2 -d'"')
+        if [[ "$OS_Version" -lt "8" ]];then
+            echo -e "${Font_Red}此脚本不支持CentOS${OS_Version},请升级至CentOS8或更换其他操作系统${Font_Suffix}"
+            echo -e "${Font_Red}3秒后退出脚本...${Font_Suffix}"
+            sleep 3
+            exit 1
         fi
-    else
-        echo -e " TikTok               : ${RED}Network connection failed${PLAIN}"
+    fi        
+}
+if [ -z "$iface" ]; then
+    useNIC=""
+fi
+
+if ! mktemp -u --suffix=RRC &>/dev/null; then
+    is_busybox=1
+fi
+
+function MediaUnlockTest_Tiktok_Region() {
+    echo -n -e " Tiktok Region:\t\t\c"
+    local Ftmpresult=$(curl $useNIC --user-agent "${UA_Browser}" -s --max-time 10 "https://www.tiktok.com/")
+
+    if [[ "$Ftmpresult" = "curl"* ]]; then
+        echo -n -e "\r Tiktok Region:\t\t${Font_Red}Failed (Network Connection)${Font_Suffix}\n"
+        return
     fi
+
+    local FRegion=$(echo $Ftmpresult | grep '"region":' | sed 's/.*"region"//' | cut -f2 -d'"')
+    if [ -n "$FRegion" ]; then
+        echo -n -e "\r Tiktok Region:\t\t${Font_Green}【${FRegion}】${Font_Suffix}\n"
+        return
+    fi
+
+    local STmpresult=$(curl $useNIC --user-agent "${UA_Browser}" -sL --max-time 10 -H "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9" -H "Accept-Encoding: gzip" -H "Accept-Language: en" "https://www.tiktok.com" | gunzip 2>/dev/null)
+    local SRegion=$(echo $STmpresult | grep '"region":' | sed 's/.*"region"//' | cut -f2 -d'"')
+    if [ -n "$SRegion" ]; then
+        echo -n -e "\r Tiktok Region:\t\t${Font_Yellow}【${SRegion}】(可能为IDC IP)${Font_Suffix}\n"
+        return
+    else
+        echo -n -e "\r Tiktok Region:\t\t${Font_Red}Failed${Font_Suffix}\n"
+        return
+    fi
+
+}
+
+function Heading() {
+    echo -e " ${Font_SkyBlue}** 您的网络为: ${local_isp4} (${local_ipv4_asterisk})${Font_Suffix} "
+    echo "******************************************"
+    echo ""
+
+}
+function ScriptTitle() {
+    echo -e "${Font_SkyBlue}【Tiktok区域检测】${Font_Suffix}"
+    echo ""
+    echo -e " ** 测试时间: $(date)"
+    echo ""
+}
+function RunScript() {
+    ScriptTitle
+    Heading
+    MediaUnlockTest_Tiktok_Region
+
 }
 # 检测 chatgpt解锁状态的函数
 UnlockChatGPTTest() {
