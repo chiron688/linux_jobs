@@ -67,8 +67,8 @@ function MediaUnlockTest_Tiktok_Region() {
 
     if [ -n "$FRegion" ]; then
         if [ -n "$FCity" ]; then
-            echo -n -e "\r Tiktok Region:\t\t${Font_Green}【${FRegion}】\n"
-            echo -n -e "\r City: 【${FCity}】${Font_Suffix} \n"
+            echo -n -e "\r Tiktok Region:\t\t${Font_Yellow}【${FRegion}】${Font_Suffix}\n"
+            echo -n -e "\r City:\t\t${Font_Yellow}【${FCity}】 ${Font_Suffix}\n"
         else
             echo -n -e "\r Tiktok Region:\t\t${Font_Green}【${FRegion}】${Font_Suffix}\n"
         fi
@@ -81,11 +81,12 @@ function MediaUnlockTest_Tiktok_Region() {
 
     if [ -n "$SRegion" ]; then
         if [ -n "$SCity" ]; then
-            echo -n -e "\r Tiktok Region:\t\t${Font_Yellow}【${SRegion}】\n"
-            echo -n -e "\r City: 【${SCity}】\n"
-            echo -n -e "\r (可能为IDC IP)${Font_Suffix}\n"
+            echo -n -e "\r Tiktok Region:\t\t${Font_Yellow}【${SRegion}】${Font_Suffix}\n"
+            echo -n -e "\r City:\t\t${Font_Yellow}【${SCity}】 ${Font_Suffix}\n"
+            echo -n -e "\r \t\t${Font_Red}(可能为IDC IP)${Font_Suffix}\n"
         else
-            echo -n -e "\r Tiktok Region:\t\t${Font_Yellow}【${SRegion}】(可能为IDC IP)${Font_Suffix}\n"
+            echo -n -e "\r Tiktok Region:\t\t${Font_Yellow}【${SRegion}】${Font_Suffix}\n"
+            echo -n -e "\r \t\t${Font_Red}(可能为IDC IP)${Font_Suffix}\n"
         fi
         return
     else
