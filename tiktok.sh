@@ -67,7 +67,7 @@ function MediaUnlockTest_Tiktok_Region() {
 
     if [ -n "$FRegion" ]; then
         if [ -n "$FCity" ]; then
-            echo -n -e "\r Tiktok Region:\t\t${Font_Green}【${FRegion}】 - City: 【${FCity}】${Font_Suffix}\n"
+            echo -n -e "\r Tiktok Region:\t\t${Font_Green}【${FRegion}】\n City: 【${FCity}】${Font_Suffix}\n"
         else
             echo -n -e "\r Tiktok Region:\t\t${Font_Green}【${FRegion}】${Font_Suffix}\n"
         fi
