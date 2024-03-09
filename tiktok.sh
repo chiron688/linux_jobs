@@ -54,30 +54,33 @@ local_ipv4_asterisk=$(awk -F"." '{print $1"."$2".*.*"}' <<<"${local_ipv4}")
 local_isp4=$(curl $useNIC -s -4 -A $UA_Browser --max-time 10 https://api.ip.sb/geoip/${local_ipv4} | grep organization | cut -f4 -d '"')
 
 function MediaUnlockTest_Tiktok_Region() {
-    echo -n -e "Tiktok Region:\t\t\c"
-    local Ftmpresult=$(curl $useNIC --user-agent "${UA_Browser}" -s --max-time 10 "https://www.tiktok.com/")
+    echo -n "Tiktok Region: \t\t"
+    local result=$(curl $useNIC --user-agent "${UA_Browser}" -s --max-time 10 "https://www.tiktok.com/")
 
-    if [[ "$Ftmpresult" = "curl"* ]]; then
-        echo -n -e "\rTiktok Region:\t\t${Font_Red}Failed (Network Connection)${Font_Suffix}\n"
+    if [[ "$result" = "curl"* ]]; then
+        echo -e "${Font_Red}Failed (Network Connection)${Font_Suffix}"
         return
     fi
 
-    local FRegion=$(echo $Ftmpresult | grep '"region":' | sed 's/.*"region"//' | cut -f2 -d'"')
-    local FCity=$(echo $Ftmpresult | grep '"geoCity":' | sed 's/.*"City"://' | cut -f2 -d'"' | sed 's/,.*//')
+    local region=$(echo $result | grep '"region":' | sed 's/.*"region"//' | cut -f2 -d'"')
+    local city=$(echo $result | grep '"geoCity":' | sed 's/.*"City":"\([^"]*\)".*/\1/')
 
-    if [ -n "$FRegion" ]; then
-        echo -n -e "\rTiktok Region:\t\t${Font_Green}【${FRegion}】${Font_Suffix}\n"
+    if [ -n "$region" ]; then
+        echo -e "${Font_Green}【${region}】${Font_Suffix}"
     else
-        echo -n -e "\rTiktok Region:\t\t${Font_Red}Failed${Font_Suffix}\n"
+        echo -e "${Font_Red}Failed${Font_Suffix}"
     fi
 
-    if [ -n "$FCity" ]; then
-        echo -n -e "City:\t\t${Font_Green}【${FCity}】${Font_Suffix}\n"
-        echo -n -e "${Font_Red}【可能为IDC IP】${Font_Suffix}\n"
+    if [ -n "$city" ]; then
+        echo -e "City: \t\t\t${Font_Green}【${city}】${Font_Suffix}"
+        echo -e "${Font_Red}【可能为IDC IP】${Font_Suffix}"
+    else
+        # 仅当地区识别成功但城市未识别时，尝试备用方法（或显示无法获取城市信息）
+        if [ -n "$region" ]; then
+            echo -e "${Font_Yellow}City information is unavailable.${Font_Suffix}"
+        fi
     fi
 }
-
-
 
 function Heading() {
     echo -e " ${Font_SkyBlue}** 您的网络为: ${local_isp4} (${local_ipv4_asterisk})${Font_Suffix} "
