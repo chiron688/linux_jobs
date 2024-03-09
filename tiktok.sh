@@ -48,40 +48,48 @@ fi
 
 UA_Browser="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.87 Safari/537.36"
 
-
 local_ipv4=$(curl $useNIC -4 -s --max-time 10 api64.ipify.org)
 local_ipv4_asterisk=$(awk -F"." '{print $1"."$2".*.*"}' <<<"${local_ipv4}")
 local_isp4=$(curl $useNIC -s -4 -A $UA_Browser --max-time 10 https://api.ip.sb/geoip/${local_ipv4} | grep organization | cut -f4 -d '"')
 
 function MediaUnlockTest_Tiktok_Region() {
     echo -n -e "Tiktok Region:\t\t\c"
-    local tmpResult=$(curl $useNIC --user-agent "${UA_Browser}" -s --max-time 10 "https://www.tiktok.com/")
+    local FtmpResult=$(curl $useNIC --user-agent "${UA_Browser}" -s --max-time 10 "https://www.tiktok.com/")
 
-    if [[ "$tmpResult" = "curl"* ]]; then
+    if [[ "$FtmpResult" = "curl"* ]]; then
         echo -e "\rTiktok Region:\t\t${Font_Red}Failed (Network Connection)${Font_Suffix}"
         return
     fi
 
-    local region=$(echo $tmpResult | grep '"region":' | sed 's/.*"region"//' | cut -f2 -d'"')
-    local city=$(echo $tmpResult | grep '"geoCity":' | sed 's/.*"City":"\([^"]*\)".*/\1/')
+    local FRegion=$(echo $Ftmpresult | grep '"region":' | sed 's/.*"region"//' | cut -f2 -d'"')
+    local Fcity=$(echo $FtmpResult | grep '"geoCity":' | sed 's/.*"City":"\([^"]*\)".*/\1/')
 
-    if [ -n "$region" ]; then
+    if [ -n "$Fregion" ]; then
         echo -e "\rTiktok Region:\t\t${Font_Green}【${region}】${Font_Suffix}"
     else
         echo -e "\rTiktok Region:\t\t${Font_Red}Failed${Font_Suffix}"
         return
     fi
 
-    if [ -n "$city" ]; then
-        echo -e "City:\t\t\t${Font_Green}【${city}】${Font_Suffix}"
-        echo -e "${Font_Red}【可能为IDC IP】${Font_Suffix}"
+    if [ -n "$Fcity" ]; then
+        echo -e "\rCity:\t\t\t${Font_Green}【${city}】${Font_Suffix}"
+    else
+        echo -e "\rCity:\t\t${Font_Red}Failed${Font_Suffix}"
         return
     fi
 
     # 如果在第一次尝试中未能获取城市信息，则尝试备用方法
-    local tmpResult=$(curl $useNIC --user-agent "${UA_Browser}" -sL --max-time 10 -H "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9" -H "Accept-Encoding: gzip" -H "Accept-Language: en" "https://www.tiktok.com" | gunzip 2>/dev/null)
-    local city=$(echo $tmpResult | grep '"geoCity":' | sed 's/.*"City":"\([^"]*\)".*/\1/')
-
+    local StmpResult=$(curl $useNIC --user-agent "${UA_Browser}" -sL --max-time 10 -H "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9" -H "Accept-Encoding: gzip" -H "Accept-Language: en" "https://www.tiktok.com" | gunzip 2>/dev/null)
+    local SRegion=$(echo $STmpresult | grep '"region":' | sed 's/.*"region"//' | cut -f2 -d'"')
+    local Scity=$(echo $StmpResult | grep '"geoCity":' | sed 's/.*"City":"\([^"]*\)".*/\1/')
+    
+    if [ -n "$SRegion" ]; then
+        echo -n -e "\r Tiktok Region:\t\t${Font_Yellow}【${SRegion}】\n"
+        return
+    else
+        echo -n -e "\r Tiktok Region:\t\t${Font_Red}Failed${Font_Suffix}\n"
+        return
+    fi
     if [ -n "$city" ]; then
         echo -e "City:\t\t\t${Font_Green}【${city}】${Font_Suffix}"
         echo -e "${Font_Red}【可能为IDC IP】${Font_Suffix}"
