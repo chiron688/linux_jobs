@@ -54,33 +54,42 @@ local_ipv4_asterisk=$(awk -F"." '{print $1"."$2".*.*"}' <<<"${local_ipv4}")
 local_isp4=$(curl $useNIC -s -4 -A $UA_Browser --max-time 10 https://api.ip.sb/geoip/${local_ipv4} | grep organization | cut -f4 -d '"')
 
 function MediaUnlockTest_Tiktok_Region() {
-    echo -n "Tiktok Region: \t\t"
-    local result=$(curl $useNIC --user-agent "${UA_Browser}" -s --max-time 10 "https://www.tiktok.com/")
+    echo -n -e "Tiktok Region:\t\t\c"
+    local tmpResult=$(curl $useNIC --user-agent "${UA_Browser}" -s --max-time 10 "https://www.tiktok.com/")
 
-    if [[ "$result" = "curl"* ]]; then
-        echo -e "${Font_Red}Failed (Network Connection)${Font_Suffix}"
+    if [[ "$tmpResult" = "curl"* ]]; then
+        echo -e "\rTiktok Region:\t\t${Font_Red}Failed (Network Connection)${Font_Suffix}"
         return
     fi
 
-    local region=$(echo $result | grep '"region":' | sed 's/.*"region"//' | cut -f2 -d'"')
-    local city=$(echo $result | grep '"geoCity":' | sed 's/.*"City":"\([^"]*\)".*/\1/')
+    local region=$(echo $tmpResult | grep '"region":' | sed 's/.*"region"//' | cut -f2 -d'"')
+    local city=$(echo $tmpResult | grep '"geoCity":' | sed 's/.*"City":"\([^"]*\)".*/\1/')
 
     if [ -n "$region" ]; then
-        echo -e "${Font_Green}【${region}】${Font_Suffix}"
+        echo -e "\rTiktok Region:\t\t${Font_Green}【${region}】${Font_Suffix}"
     else
-        echo -e "${Font_Red}Failed${Font_Suffix}"
+        echo -e "\rTiktok Region:\t\t${Font_Red}Failed${Font_Suffix}"
+        return
     fi
 
     if [ -n "$city" ]; then
-        echo -e "City: \t\t\t${Font_Green}【${city}】${Font_Suffix}"
+        echo -e "City:\t\t\t${Font_Green}【${city}】${Font_Suffix}"
+        echo -e "${Font_Red}【可能为IDC IP】${Font_Suffix}"
+        return
+    fi
+
+    # 如果在第一次尝试中未能获取城市信息，则尝试备用方法
+    local tmpResult=$(curl $useNIC --user-agent "${UA_Browser}" -sL --max-time 10 -H "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9" -H "Accept-Encoding: gzip" -H "Accept-Language: en" "https://www.tiktok.com" | gunzip 2>/dev/null)
+    local city=$(echo $tmpResult | grep '"geoCity":' | sed 's/.*"City":"\([^"]*\)".*/\1/')
+
+    if [ -n "$city" ]; then
+        echo -e "City:\t\t\t${Font_Green}【${city}】${Font_Suffix}"
         echo -e "${Font_Red}【可能为IDC IP】${Font_Suffix}"
     else
-        # 仅当地区识别成功但城市未识别时，尝试备用方法（或显示无法获取城市信息）
-        if [ -n "$region" ]; then
-            echo -e "${Font_Yellow}City information is unavailable.${Font_Suffix}"
-        fi
+        echo -e "City:\t\t\t${Font_Red}Failed to determine city${Font_Suffix}"
     fi
 }
+
 
 function Heading() {
     echo -e " ${Font_SkyBlue}** 您的网络为: ${local_isp4} (${local_ipv4_asterisk})${Font_Suffix} "
