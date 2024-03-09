@@ -54,11 +54,11 @@ local_ipv4_asterisk=$(awk -F"." '{print $1"."$2".*.*"}' <<<"${local_ipv4}")
 local_isp4=$(curl $useNIC -s -4 -A $UA_Browser --max-time 10 https://api.ip.sb/geoip/${local_ipv4} | grep organization | cut -f4 -d '"')
 
 function MediaUnlockTest_Tiktok_Region() {
-    echo -n -e " Tiktok Region:\t\t\c"
+    echo -n -e "Tiktok Region:\t\t\c"
     local Ftmpresult=$(curl $useNIC --user-agent "${UA_Browser}" -s --max-time 10 "https://www.tiktok.com/")
 
     if [[ "$Ftmpresult" = "curl"* ]]; then
-        echo -n -e "\r Tiktok Region:\t\t${Font_Red}Failed (Network Connection)${Font_Suffix}\n"
+        echo -n -e "\rTiktok Region:\t\t${Font_Red}Failed (Network Connection)${Font_Suffix}\n"
         return
     fi
 
@@ -66,31 +66,17 @@ function MediaUnlockTest_Tiktok_Region() {
     local FCity=$(echo $Ftmpresult | grep '"geoCity":' | sed 's/.*"City"://' | cut -f2 -d'"' | sed 's/,.*//')
 
     if [ -n "$FRegion" ]; then
-        if [ -n "$FCity" ]; then
-            echo -n -e "\r Tiktok Region:\t\t${Font_Green}【${FRegion}】\n"
-            echo -n -e "\r City: 【${FCity}】${Font_Suffix}\n"
-        else
-            echo -n -e "\r Tiktok Region:\t\t${Font_Green}【${FRegion}】${Font_Suffix}\n"
-        fi
-        return
+        echo -n -e "\rTiktok Region:\t\t${Font_Green}【${FRegion}】${Font_Suffix}\n"
+    else
+        echo -n -e "\rTiktok Region:\t\t${Font_Red}Failed${Font_Suffix}\n"
     fi
 
-    local STmpresult=$(curl $useNIC --user-agent "${UA_Browser}" -sL --max-time 10 -H "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9" -H "Accept-Encoding: gzip" -H "Accept-Language: en" "https://www.tiktok.com" | gunzip 2>/dev/null)
-    local SRegion=$(echo $STmpresult | grep '"region":' | sed 's/.*"region"//' | cut -f2 -d'"')
-    local SCity=$(echo $STmpresult | grep '"geoCity":' | sed 's/.*"City"://' | cut -f2 -d'"' | sed 's/,.*//')
-
-    if [ -n "$SRegion" ]; then
-        if [ -n "$SCity" ]; then
-            echo -n -e "\r Tiktok Region:\t\t${Font_Yellow}【${SRegion}】 - City: 【${SCity}】(可能为IDC IP)${Font_Suffix}\n"
-        else
-            echo -n -e "\r Tiktok Region:\t\t${Font_Yellow}【${SRegion}】(可能为IDC IP)${Font_Suffix}\n"
-        fi
-        return
-    else
-        echo -n -e "\r Tiktok Region:\t\t${Font_Red}Failed${Font_Suffix}\n"
-        return
+    if [ -n "$FCity" ]; then
+        echo -n -e "City:\t\t${Font_Green}【${FCity}】${Font_Suffix}\n"
+        echo -n -e "${Font_Red}【可能为IDC IP】${Font_Suffix}\n"
     fi
 }
+
 
 
 function Heading() {
