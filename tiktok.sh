@@ -58,6 +58,7 @@ function MediaUnlockTest_Tiktok_Region() {
     local FtmpResult=$(curl $useNIC --user-agent "${UA_Browser}" -s --max-time 10 "https://www.tiktok.com/")
 
     if [[ "$FtmpResult" = "curl"* ]]; then
+        echo -e "\rFtmpResult出问题了\n"
         echo -e "\rTiktok Region:\t\t${Font_Red}Failed (Network Connection)${Font_Suffix}"
         return
     fi
@@ -68,6 +69,7 @@ function MediaUnlockTest_Tiktok_Region() {
     if [ -n "$FRegion" ]; then
         echo -e "\rTiktok Region:\t\t${Font_Green}【${FRegion}】${Font_Suffix}"
     else
+        echo -e "\rFRegion出问题了\n"
         echo -e "\rTiktok Region:\t\t${Font_Red}Failed${Font_Suffix}"
         return
     fi
@@ -86,6 +88,7 @@ function MediaUnlockTest_Tiktok_Region() {
     local Scity=$(echo $StmpResult | grep '"geoCity":' | sed 's/.*"City":"\([^"]*\)".*/\1/')
     
     if [ -n "$SRegion" ]; then
+        echo -e "\rSRegion出问题了\n"
         echo -e "\rTiktok Region:\t\t${Font_Green}【${FRegion}】${Font_Suffix}"
     else
         echo -e "\rTiktok Region:\t\t${Font_Red}Failed${Font_Suffix}"
