@@ -63,22 +63,34 @@ function MediaUnlockTest_Tiktok_Region() {
     fi
 
     local FRegion=$(echo $Ftmpresult | grep '"region":' | sed 's/.*"region"//' | cut -f2 -d'"')
+    local FCity=$(echo $Ftmpresult | grep '"geoCity":' | sed 's/.*"City"://' | cut -f2 -d'"' | sed 's/,.*//')
+
     if [ -n "$FRegion" ]; then
-        echo -n -e "\r Tiktok Region:\t\t${Font_Green}【${FRegion}】${Font_Suffix}\n"
+        if [ -n "$FCity" ]; then
+            echo -n -e "\r Tiktok Region:\t\t${Font_Green}【${FRegion}】 - City: 【${FCity}】${Font_Suffix}\n"
+        else
+            echo -n -e "\r Tiktok Region:\t\t${Font_Green}【${FRegion}】${Font_Suffix}\n"
+        fi
         return
     fi
 
     local STmpresult=$(curl $useNIC --user-agent "${UA_Browser}" -sL --max-time 10 -H "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9" -H "Accept-Encoding: gzip" -H "Accept-Language: en" "https://www.tiktok.com" | gunzip 2>/dev/null)
     local SRegion=$(echo $STmpresult | grep '"region":' | sed 's/.*"region"//' | cut -f2 -d'"')
+    local SCity=$(echo $STmpresult | grep '"geoCity":' | sed 's/.*"City"://' | cut -f2 -d'"' | sed 's/,.*//')
+
     if [ -n "$SRegion" ]; then
-        echo -n -e "\r Tiktok Region:\t\t${Font_Yellow}【${SRegion}】(可能为IDC IP)${Font_Suffix}\n"
+        if [ -n "$SCity" ]; then
+            echo -n -e "\r Tiktok Region:\t\t${Font_Yellow}【${SRegion}】 - City: 【${SCity}】(可能为IDC IP)${Font_Suffix}\n"
+        else
+            echo -n -e "\r Tiktok Region:\t\t${Font_Yellow}【${SRegion}】(可能为IDC IP)${Font_Suffix}\n"
+        fi
         return
     else
         echo -n -e "\r Tiktok Region:\t\t${Font_Red}Failed${Font_Suffix}\n"
         return
     fi
-
 }
+
 
 function Heading() {
     echo -e " ${Font_SkyBlue}** 您的网络为: ${local_isp4} (${local_ipv4_asterisk})${Font_Suffix} "
