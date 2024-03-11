@@ -811,6 +811,7 @@ function Global_UnlockTest() {
 }
 
 function RunScript() {
+    clear
     CheckV4
     if [[ "$isv4" -eq 1 ]]; then
         Global_UnlockTest 4
