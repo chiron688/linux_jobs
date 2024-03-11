@@ -2,6 +2,11 @@
 
 个人自用linux脚本就当作备份了
 
+流媒体解锁检测，包含tiktok检测：
+```shell
+ bash <(curl -L -s raw.githubusercontent.com/chiron688/linux_jobs/main/mediaunlock.sh)
+```
+
 tiktok 解锁检测：
 ```shell
  bash <(curl -L -s raw.githubusercontent.com/chiron688/linux_jobs/main/tiktok.sh)
