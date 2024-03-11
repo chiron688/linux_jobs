@@ -10,7 +10,7 @@ Font_SkyBlue="\033[36m"
 Font_White="\033[37m"
 Font_Suffix="\033[0m"
 
-while getopts ":I:M:EX:P:" optname; do
+while getopts ":I:M:E:X:P:" optname; do
     case "$optname" in
     "I")
         iface="$OPTARG"
@@ -761,7 +761,7 @@ function MediaUnlockTest_Tiktok_Region() {
         if [ -n "$FCity" ]; then
             echo -n -e "\r Tiktok:\t\t\t\t${Font_Green}Yes(Region:${FRegion} City:${FCity})${Font_Suffix}\n"
         else
-            echo -n -e "\r Tiktok:\t\t\t\t${Font_Green}Yes(Region:${FRegion})${Font_Suffix}\n"
+            echo -n -e "\r Tiktok:\t\t\t\t${Font_RED}Yes(Region:${FRegion} 但是无法获取城市，可能无法在手机上打开tiktok app)${Font_Suffix}\n"
         fi
         return
     fi
@@ -774,7 +774,7 @@ function MediaUnlockTest_Tiktok_Region() {
         if [ -n "$SCity" ]; then
             echo -n -e "\r Tiktok:\t\t\t\t${Font_Green}Yes(Region:${SRegion} City:${SCity} 可能为idc ip)${Font_Suffix}\n"
         else
-            echo -n -e "\r Tiktok:\t\t\t\t${Font_Green}Yes(Region:${SRegion} 可能为idc ip)${Font_Suffix}\n"
+            echo -n -e "\r Tiktok:\t\t\t\t${Font_Red}Yes(Region:${SRegion} 但是无法获取城市，可能无法在手机上打开tiktok app，可能为idc ip)${Font_Suffix}\n"
         fi
         return
     else
