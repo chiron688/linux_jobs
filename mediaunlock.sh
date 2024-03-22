@@ -834,6 +834,7 @@ function RunScript() {
             if [[ "$isv6" -eq 1 ]]; then
                 Global_UnlockTest 6
             fi   
+        done  # 这里添加了缺失的 done 关键字
     else
         echo "txt文件路径有误, 请检查后重试"
     fi
