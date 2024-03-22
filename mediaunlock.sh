@@ -816,28 +816,40 @@ function Global_UnlockTest() {
     echo "======================================="
 }
 
+# function RunScript() {
+#     clear
+#     if [[ -n "$txtFilePath" ]]; then
+#         # 读取txt文件内容
+#         while IFS= read -r line; do
+#             # 读取每一行的内容
+#             echo "正在测试 ${line} ..."
+#             # 读取每一行的proxy参数
+#             proxy="$line"
+#             usePROXY="-x $proxy"
+#             CheckV4
+#             if [[ "$isv4" -eq 1 ]]; then
+#                 Global_UnlockTest 4
+#             fi
+#             CheckV6
+#             if [[ "$isv6" -eq 1 ]]; then
+#                 Global_UnlockTest 6
+#             fi   
+#         done  # 这里添加了缺失的 done 关键字
+#     else
+#         echo "txt文件路径有误, 请检查后重试"
+#     fi
+# }
 function RunScript() {
     clear
-    if [[ -n "$txtFilePath" ]]; then
-        # 读取txt文件内容
-        while IFS= read -r line; do
-            # 读取每一行的内容
-            echo "正在测试 ${line} ..."
-            # 读取每一行的proxy参数
-            proxy="$line"
-            usePROXY="-x $proxy"
-            CheckV4
-            if [[ "$isv4" -eq 1 ]]; then
-                Global_UnlockTest 4
-            fi
-            CheckV6
-            if [[ "$isv6" -eq 1 ]]; then
-                Global_UnlockTest 6
-            fi   
-        done  # 这里添加了缺失的 done 关键字
-    else
-        echo "txt文件路径有误, 请检查后重试"
+    CheckV4
+    if [[ "$isv4" -eq 1 ]]; then
+        Global_UnlockTest 4
     fi
+    CheckV6
+    if [[ "$isv6" -eq 1 ]]; then
+        Global_UnlockTest 6
+    fi   
+
 }
 
 RunScript
