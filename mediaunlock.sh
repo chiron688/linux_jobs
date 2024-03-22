@@ -10,7 +10,7 @@ Font_SkyBlue="\033[36m"
 Font_White="\033[37m"
 Font_Suffix="\033[0m"
 
-while getopts ":I:M:E:X:P:" optname; do
+while getopts ":I:M:E:X:P:T:" optname; do
     case "$optname" in
     "I")
         iface="$OPTARG"
@@ -34,6 +34,9 @@ while getopts ":I:M:E:X:P:" optname; do
         proxy="$OPTARG"
         usePROXY="-x $proxy"
     	;;
+    "T")
+        txtFilePath="$OPTARG"  # 将TXT文件路径保存到变量中
+        ;;
     ":")
         echo "Unknown error while processing options"
         exit 1
@@ -814,14 +817,26 @@ function Global_UnlockTest() {
 }
 
 function RunScript() {
-    CheckV4
-    if [[ "$isv4" -eq 1 ]]; then
-        Global_UnlockTest 4
+    clear
+    if [[ -n "$txtFilePath" ]]; then
+        # 读取txt文件内容
+        while IFS= read -r line; do
+            # 读取每一行的内容
+            echo "正在测试 ${line} ..."
+            # 读取每一行的proxy参数
+            proxy="$line"
+            usePROXY="-x $proxy"
+            CheckV4
+            if [[ "$isv4" -eq 1 ]]; then
+                Global_UnlockTest 4
+            fi
+            CheckV6
+            if [[ "$isv6" -eq 1 ]]; then
+                Global_UnlockTest 6
+            fi   
+    else
+        echo "txt文件路径有误, 请检查后重试"
     fi
-    CheckV6
-    if [[ "$isv6" -eq 1 ]]; then
-        Global_UnlockTest 6
-    fi   
 }
 
 RunScript
