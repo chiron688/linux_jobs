@@ -252,6 +252,8 @@ function CheckPROXY() {
             proxyType=Socks5
         elif [[ "$proxy" == *"http"* ]]; then
             proxyType=http
+        elif [[ "$proxy" == *"socks5h"* ]]; then
+            proxyType=Socks5h
         else
             proxyType=""
         fi
