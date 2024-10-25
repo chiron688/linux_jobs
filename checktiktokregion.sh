@@ -97,5 +97,5 @@ function MediaUnlockTest_Tiktok_Region() {
 
 
 
-CheckPROXY
+# CheckPROXY
 MediaUnlockTest_Tiktok_Region
