@@ -104,9 +104,16 @@ function MediaUnlockTest_Tiktok_Region() {
     local FCity=$(echo "$Ftmpresult" | sed -n 's/.*"City":\s*"\([^"]*\)".*/\1/p')
     local FGeoID=$(echo "$Ftmpresult" | sed -n 's/.*"GeoNameID":\s*"\([^"]*\)".*/\1/p')
 
-    if [ -n "$FRegion" ] && [ -n "$FCity" ]; then
-        echo "{\"status\":\"Success\", \"Region\":\"$FRegion\", \"City\":\"${FCity}\", \"GeoID\":\"${FGeoID:-Unknown}\"}"
-        return
+    if [ -n "$FRegion" ]; then
+        if [ -n "$FCity" ]; then 
+            if [ -n "$FGeoID" ]; then
+                echo "{\"status\":\"Success\", \"Region\":\"$FRegion\", \"City\":\"$FCity\", \"GeoID\":\"$FGeoID\"}"
+            else
+                echo "{\"status\":\"Success\", \"Region\":\"$FRegion\", \"City\":\"$FCity\", \"GeoID\":\"${FGeoID:-Unknown}\"}"
+        else
+            echo echo "{\"status\":\"Success\", \"Region\":\"$FRegion\", \"City\":\"${FCity:-Unknown}\", \"GeoID\":\"${FGeoID:-Unknown}\"}"
+    else
+        echo "{\"status\":\"Failed\", \"reason\":\"Region  not found\"}"
     fi
 
     # Retry using alternative headers and unzipping if the initial parse fails
@@ -118,12 +125,19 @@ function MediaUnlockTest_Tiktok_Region() {
     local SCity=$(echo "$STmpresult" | sed -n 's/.*"City":\s*"\([^"]*\)".*/\1/p')
     local SGeoID=$(echo "$STmpresult" | sed -n 's/.*"GeoNameID":\s*"\([^"]*\)".*/\1/p')
 
-    if [ -n "$SRegion" ] && [ -n "$SCity" ]; then
-        echo "{\"status\":\"Success\", \"Region\":\"$SRegion\", \"City\":\"${SCity}\", \"GeoID\":\"${SGeoID:-Unknown}\"}"
+    if [ -n "$SRegion" ]; then
+        if [ -n "$SCity" ]; then 
+            if [ -n "$SGeoID" ]; then
+                echo "{\"status\":\"Success\", \"Region\":\"$SRegion\", \"City\":\"$SCity\", \"GeoID\":\"$SGeoID\"}"
+            else
+                echo "{\"status\":\"Success\", \"Region\":\"$SRegion\", \"City\":\"$SCity\", \"GeoID\":\"${SGeoID:-Unknown}\"}"
+        else
+            echo echo "{\"status\":\"Success\", \"Region\":\"$SRegion\", \"City\":\"${SCity:-Unknown}\", \"GeoID\":\"${SGeoID:-Unknown}\"}"
     else
-        echo "{\"status\":\"Failed\", \"reason\":\"Region or City not found\"}"
+        echo "{\"status\":\"Failed\", \"reason\":\"Region  not found\"}"
     fi
 }
+
 
 
 
