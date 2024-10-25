@@ -69,11 +69,11 @@ function MediaUnlockTest_Tiktok_Region() {
         return
     fi
 
-    # 提取新的地理信息结构
-    FGeo=$(echo "$Ftmpresult" | grep -oP '(?<="geo":\s*\[")[^"]+')
-    FCity=$(echo "$Ftmpresult" | grep -oP '(?<="City":\s*")[^"]+')
-    FSubdivisions=$(echo "$Ftmpresult" | grep -oP '(?<="Subdivisions":\s*")[^"]+')
-    FGeoID=$(echo "$Ftmpresult" | grep -oP '(?<="GeoNameID":\s*")[^"]+')
+    # 提取新的地理信息结构使用 sed
+    FGeo=$(echo "$Ftmpresult" | sed -n 's/.*"geo":\[\([^]]*\)\].*/\1/p')
+    FCity=$(echo "$Ftmpresult" | sed -n 's/.*"City":"\([^"]*\)".*/\1/p')
+    FSubdivisions=$(echo "$Ftmpresult" | sed -n 's/.*"Subdivisions":"\([^"]*\)".*/\1/p')
+    FGeoID=$(echo "$Ftmpresult" | sed -n 's/.*"GeoNameID":"\([^"]*\)".*/\1/p')
 
     if [ -n "$FGeo" ] && [ -n "$FCity" ]; then
         echo "{\"status\":\"Success\", \"Region\":\"$FSubdivisions\", \"City\":\"${FCity}\", \"GeoID\":\"${FGeoID:-Unknown}\"}"
@@ -82,11 +82,11 @@ function MediaUnlockTest_Tiktok_Region() {
 
     # 如果初步匹配失败，尝试其他匹配方式
     STmpresult=$(curl $useNIC $usePROXY $xForward --user-agent "${UA_Browser}" -sL --max-time 10 -H "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9" -H "Accept-Encoding: gzip" -H "Accept-Language: en" "https://www.tiktok.com" | gunzip 2>/dev/null)
-    
-    SGeo=$(echo "$STmpresult" | grep -oP '(?<="geo":\s*\[")[^"]+')
-    SCity=$(echo "$STmpresult" | grep -oP '(?<="City":\s*")[^"]+')
-    SSubdivisions=$(echo "$STmpresult" | grep -oP '(?<="Subdivisions":\s*")[^"]+')
-    SGeoID=$(echo "$STmpresult" | grep -oP '(?<="GeoNameID":\s*")[^"]+')
+
+    SGeo=$(echo "$STmpresult" | sed -n 's/.*"geo":\[\([^]]*\)\].*/\1/p')
+    SCity=$(echo "$STmpresult" | sed -n 's/.*"City":"\([^"]*\)".*/\1/p')
+    SSubdivisions=$(echo "$STmpresult" | sed -n 's/.*"Subdivisions":"\([^"]*\)".*/\1/p')
+    SGeoID=$(echo "$STmpresult" | sed -n 's/.*"GeoNameID":"\([^"]*\)".*/\1/p')
 
     if [ -n "$SGeo" ] && [ -n "$SCity" ]; then
         echo "{\"status\":\"Success\", \"Region\":\"$SSubdivisions\", \"City\":\"${SCity}\", \"GeoID\":\"${SGeoID:-Unknown}\"}"
@@ -94,7 +94,6 @@ function MediaUnlockTest_Tiktok_Region() {
         echo "{\"status\":\"Failed\", \"reason\":\"Region or City not found\"}"
     fi
 }
-
 
 
 # CheckPROXY
