@@ -104,15 +104,15 @@ function MediaUnlockTest_Tiktok_Region() {
     local FCity=$(echo "$Ftmpresult" | sed -n 's/.*"City":\s*"\([^"]*\)".*/\1/p')
     local FGeoID=$(echo "$Ftmpresult" | sed -n 's/.*"GeoNameID":\s*"\([^"]*\)".*/\1/p')
 
-    if [ -n "$FRegion" ]; then
-        if [ -n "$FCity" ]; then 
-            if [ -n "$FGeoID" ]; then
-                echo "{\"status\":\"Success\", \"Region\":\"$FRegion\", \"City\":\"$FCity\", \"GeoID\":\"$FGeoID\"}"
+    if [ -n "$SRegion" ]; then
+        if [ -n "$SCity" ]; then 
+            if [ -n "$SGeoID" ]; then
+                echo "{\"status\":\"Success\", \"Region\":\"$SRegion\", \"City\":\"$SCity\", \"GeoID\":\"$SGeoID\"}"
             else
-                echo "{\"status\":\"Success\", \"Region\":\"$FRegion\", \"City\":\"$FCity\", \"GeoID\":\"${FGeoID:-Unknown}\"}"
+                echo "{\"status\":\"Success\", \"Region\":\"$SRegion\", \"City\":\"$SCity\", \"GeoID\":\"Unknown\"}"
             fi
         else
-            echo "{\"status\":\"Success\", \"Region\":\"$FRegion\", \"City\":\"${FCity:-Unknown}\", \"GeoID\":\"${FGeoID:-Unknown}\"}"
+            echo "{\"status\":\"Success\", \"Region\":\"$SRegion\", \"City\":\"Unknown\", \"GeoID\":\"${SGeoID:-Unknown}\"}"
         fi
     else
         echo "{\"status\":\"Failed\", \"reason\":\"Region not found\"}"
