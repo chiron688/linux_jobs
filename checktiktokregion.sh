@@ -110,10 +110,12 @@ function MediaUnlockTest_Tiktok_Region() {
                 echo "{\"status\":\"Success\", \"Region\":\"$FRegion\", \"City\":\"$FCity\", \"GeoID\":\"$FGeoID\"}"
             else
                 echo "{\"status\":\"Success\", \"Region\":\"$FRegion\", \"City\":\"$FCity\", \"GeoID\":\"${FGeoID:-Unknown}\"}"
+            fi
         else
-            echo echo "{\"status\":\"Success\", \"Region\":\"$FRegion\", \"City\":\"${FCity:-Unknown}\", \"GeoID\":\"${FGeoID:-Unknown}\"}"
+            echo "{\"status\":\"Success\", \"Region\":\"$FRegion\", \"City\":\"${FCity:-Unknown}\", \"GeoID\":\"${FGeoID:-Unknown}\"}"
+        fi
     else
-        echo "{\"status\":\"Failed\", \"reason\":\"Region  not found\"}"
+        echo "{\"status\":\"Failed\", \"reason\":\"Region not found\"}"
     fi
 
     # Retry using alternative headers and unzipping if the initial parse fails
@@ -131,10 +133,12 @@ function MediaUnlockTest_Tiktok_Region() {
                 echo "{\"status\":\"Success\", \"Region\":\"$SRegion\", \"City\":\"$SCity\", \"GeoID\":\"$SGeoID\"}"
             else
                 echo "{\"status\":\"Success\", \"Region\":\"$SRegion\", \"City\":\"$SCity\", \"GeoID\":\"${SGeoID:-Unknown}\"}"
+            fi
         else
-            echo echo "{\"status\":\"Success\", \"Region\":\"$SRegion\", \"City\":\"${SCity:-Unknown}\", \"GeoID\":\"${SGeoID:-Unknown}\"}"
+            echo "{\"status\":\"Success\", \"Region\":\"$SRegion\", \"City\":\"${SCity:-Unknown}\", \"GeoID\":\"${SGeoID:-Unknown}\"}"
+        fi
     else
-        echo "{\"status\":\"Failed\", \"reason\":\"Region  not found\"}"
+        echo "{\"status\":\"Failed\", \"reason\":\"Region not found\"}"
     fi
 }
 
