@@ -99,50 +99,27 @@ function MediaUnlockTest_Tiktok_Region() {
         return
     fi
 
-    # Extract the updated geographical information structure using sed
-    local FRegion=$(echo "$Ftmpresult" | sed -n 's/.*"subdivisions":\s*\[\s*"\([^"]*\)".*/\1/p')
-    local FCity=$(echo "$Ftmpresult" | sed -n 's/.*"City":\s*"\([^"]*\)".*/\1/p')
-    local FGeoID=$(echo "$Ftmpresult" | sed -n 's/.*"GeoNameID":\s*"\([^"]*\)".*/\1/p')
+    # 提取地理信息
+    local FRegion=$(echo $Ftmpresult | grep '"region":' | sed 's/.*"region"//' | cut -f2 -d'"')
+    local FCity=$(echo $Ftmpresult | grep '"geoCity":' | sed 's/.*"City"://' | cut -f2 -d'"' | sed 's/,.*//')
+    local GeoID=$(echo $Ftmpresult | grep '"geo":' | sed 's/.*"geo":\[//' | cut -f2 -d'"' | sed 's/".*//')
 
-    if [ -n "$SRegion" ]; then
-        if [ -n "$SCity" ]; then 
-            if [ -n "$SGeoID" ]; then
-                echo "{\"status\":\"Success\", \"Region\":\"$SRegion\", \"City\":\"$SCity\", \"GeoID\":\"$SGeoID\"}"
-            else
-                echo "{\"status\":\"Success\", \"Region\":\"$SRegion\", \"City\":\"$SCity\", \"GeoID\":\"Unknown\"}"
-            fi
-        else
-            echo "{\"status\":\"Success\", \"Region\":\"$SRegion\", \"City\":\"Unknown\", \"GeoID\":\"${SGeoID:-Unknown}\"}"
-        fi
-    else
-        echo "{\"status\":\"Failed\", \"reason\":\"Region not found\"}"
+    if [ -n "$FRegion" ]; then
+        echo "{\"status\":\"Success\", \"Region\":\"$FRegion\", \"City\":\"${FCity:-Unknown}\", \"GeoID\":\"${GeoID:-Unknown}\"}"
+        return
     fi
 
-    # Retry using alternative headers and unzipping if the initial parse fails
-    local STmpresult=$(curl $useNIC $usePROXY $xForward --user-agent "${UA_Browser}" -sL --max-time 10 \
-        -H "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9" \
-        -H "Accept-Encoding: gzip" -H "Accept-Language: en" "https://www.tiktok.com" | gunzip 2>/dev/null)
-
-    local SRegion=$(echo "$STmpresult" | sed -n 's/.*"subdivisions":\s*\[\s*"\([^"]*\)".*/\1/p')
-    local SCity=$(echo "$STmpresult" | sed -n 's/.*"City":\s*"\([^"]*\)".*/\1/p')
-    local SGeoID=$(echo "$STmpresult" | sed -n 's/.*"GeoNameID":\s*"\([^"]*\)".*/\1/p')
+    local STmpresult=$(curl $useNIC $usePROXY $xForward --user-agent "${UA_Browser}" -sL --max-time 10 -H "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9" -H "Accept-Encoding: gzip" -H "Accept-Language: en" "https://www.tiktok.com" | gunzip 2>/dev/null)
+    local SRegion=$(echo $STmpresult | grep '"region":' | sed 's/.*"region"//' | cut -f2 -d'"')
+    local SCity=$(echo $STmpresult | grep '"geoCity":' | sed 's/.*"City"://' | cut -f2 -d'"' | sed 's/,.*//')
+    local GeoID2=$(echo $STmpresult | grep '"geo":' | sed 's/.*"geo":\[//' | cut -f2 -d'"' | sed 's/".*//')
 
     if [ -n "$SRegion" ]; then
-        if [ -n "$SCity" ]; then 
-            if [ -n "$SGeoID" ]; then
-                echo "{\"status\":\"Success\", \"Region\":\"$SRegion\", \"City\":\"$SCity\", \"GeoID\":\"$SGeoID\"}"
-            else
-                echo "{\"status\":\"Success\", \"Region\":\"$SRegion\", \"City\":\"$SCity\", \"GeoID\":\"${SGeoID:-Unknown}\"}"
-            fi
-        else
-            echo "{\"status\":\"Success\", \"Region\":\"$SRegion\", \"City\":\"${SCity:-Unknown}\", \"GeoID\":\"${SGeoID:-Unknown}\"}"
-        fi
+        echo "{\"status\":\"Success\", \"Region\":\"$SRegion\", \"City\":\"${SCity:-Unknown}\", \"GeoID\":\"${GeoID2:-Unknown}\"}"
     else
-        echo "{\"status\":\"Failed\", \"reason\":\"Region not found\"}"
+        echo "{\"status\":\"Failed\", \"reason\":\"Region or City not found\"}"
     fi
 }
-
-
 
 
 CheckPROXY
