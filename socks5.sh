@@ -278,7 +278,7 @@ sleep 1
 
 # -----------------------
 # 获取外网 IP（用于生成 SOCKS5 链接）
-PUBLIC_IP=$(curl -s ifconfig.me 2>/dev/null)
+PUBLIC_IP=$(curl -s ipinfo.io 2>/dev/null)
 if [ -z "$PUBLIC_IP" ]; then
     echo "无法自动检测外网 IP，请手动输入服务器可访问的 IP："
     read -r PUBLIC_IP
