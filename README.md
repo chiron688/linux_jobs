@@ -6,6 +6,10 @@
 ```shell
  bash <(curl -L -s raw.githubusercontent.com/chiron688/linux_jobs/main/mediaunlock.sh)
 ```
+自动化配置socks5链接：
+```shell
+ bash <(curl -L -s raw.githubusercontent.com/chiron688/linux_jobs/main/socks5.sh)
+```
 
 tiktok 解锁检测：
 ```shell
