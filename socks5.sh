@@ -278,11 +278,13 @@ sleep 1
 
 # -----------------------
 # 获取外网 IP（用于生成 SOCKS5 链接）
-PUBLIC_IP=$(curl -s ipinfo.io 2>/dev/null)
+IPINFO=$(curl -s ipinfo.io 2>/dev/null)
+PUBLIC_IP=$(echo "$IPINFO" | sed -nE 's/.*"ip":\s*"([^"]+)".*/\1/p')
 if [ -z "$PUBLIC_IP" ]; then
     echo "无法自动检测外网 IP，请手动输入服务器可访问的 IP："
     read -r PUBLIC_IP
 fi
+
 
 # 输出所有 SOCKS5 链接
 echo "xray 已后台启动，下面是所有的 SOCKS5 链接："
