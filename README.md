@@ -4,7 +4,7 @@
 
 流媒体解锁检测，包含tiktok检测：
 ```shell
- bash <(curl -L -s raw.githubusercontent.com/chiron688/linux_jobs/main/mediaunlock.sh)
+ bash <(curl -L -s raw.githubusercontent.com/chiron688/linux_jobs/main/check.sh)
 ```
 自动化配置socks5链接：
 ```shell
