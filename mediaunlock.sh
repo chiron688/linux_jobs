@@ -444,7 +444,7 @@ function MediaUnlockTest_DisneyPlus() {
     fi
 
 }
-function MediaUnlockTest_NetflixCDN {
+function MediaUnlockTest_NetflixCDN() {
     local tmpresult=$(curl ${CURL_DEFAULT_OPTS} -s 'https://api.fast.com/netflix/speedtest/v2?https=true&token=YXNkZmFzZGxmbnNkYWZoYXNkZmhrYWxm&urlCount=1' -w '_TAG_%{http_code}' --user-agent "${UA_BROWSER}")
     local httpCode=$(echo "$tmpresult" | grep '_TAG_' | awk -F'_TAG_' '{print $2}')
     local respContent=$(echo "$tmpresult" | awk -F'_TAG_' '{print $1}')
