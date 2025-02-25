@@ -472,11 +472,6 @@ delay() {
     return 0
 }
 
-count_run_times() {
-    local tmpresult=$(curl ${CURL_OPTS} -s "https://hits.seeyoufarm.com/api/count/incr/badge.svg?url=https%3A%2F%2Fcheck.unclock.media&count_bg=%2379C83D&title_bg=%23555555&icon=&icon_color=%23E7E7E7&title=visit&edge_flat=false")
-    TODAY_RUN_TIMES=$(echo "$tmpresult" | tail -3 | head -n 1 | awk '{print $5}')
-    TOTAL_RUN_TIMES=$(($(echo "$tmpresult" | tail -3 | head -n 1 | awk '{print $7}') + 2527395))
-}
 
 download_extra_data() {
     MEDIA_COOKIE=$(curl ${CURL_OPTS} -s "https://raw.githubusercontent.com/lmc999/RegionRestrictionCheck/main/cookies")
@@ -4993,9 +4988,10 @@ function Global_UnlockTest() {
         MediaUnlockTest_Spotify &
         RegionTest_oneTrust &
         RegionTest_iQYI &
+        MediaUnlockTest_Tiktok_Region &
     )
     wait
-    local array=("Dazn:" "Disney+:" "Netflix:" "YouTube Premium:" "Amazon Prime Video:" "TVBAnywhere+:" "Spotify Registration:" "OneTrust Region:" "iQyi Oversea Region:")
+    local array=("Dazn:" "Disney+:" "Netflix:" "YouTube Premium:" "Amazon Prime Video:" "TVBAnywhere+:" "Spotify Registration:" "OneTrust Region:" "iQyi Oversea Region:" "Tiktok Region:")
     echo_result ${result} ${array}
     local result=$(
         RegionTest_Bing &
@@ -5440,77 +5436,37 @@ function Sport_UnlockTest() {
     echo "======================================="
 }
 
-function showSupportOS() {
-    if [ "$LANGUAGE" == 'en' ]; then
-        echo -e "${Font_Purple}Supporting OS: Ubuntu 16+, Debian 10+, RHEL 7+, Arch Linux, Alpine Linux, FreeBSD, MacOS 10.13+, Android (Termux), iOS (iSH), Windows (MinGW/Cygwin), OpenWRT 23+ etc.${Font_Suffix}"
-        echo ''
-    else
-        echo -e "${Font_Purple}脚本适配 OS: Ubuntu 16+, Debian 10+, RHEL 7+, Arch Linux, Alpine Linux, FreeBSD, MacOS 10.13+, Android (Termux), iOS (iSH), Windows (MinGW/Cygwin), OpenWRT 23+ 等。${Font_Suffix}"
-        echo ''
+
+function MediaUnlockTest_Tiktok_Region() {
+    # 请求 TikTok 首页获取响应内容
+    local Ftmpresult=$(curl ${CURL_DEFAULT_OPTS} --user-agent "${UA_BROWSER}" -s --max-time 10 "https://www.tiktok.com/")
+    if [[ "$Ftmpresult" = "curl"* ]]; then
+        echo -n -e "\r Tiktok Region:\t\t\t\t${Font_Red}Failed (Network Connection)${Font_Suffix}\n"
+        return
     fi
+    # 提取地理信息
+    local FRegion=$(echo $Ftmpresult | grep '"region":' | sed 's/.*"region"//' | cut -f2 -d'"')
+    local FCity=$(echo $Ftmpresult | grep '"geoCity":' | sed 's/.*"City"://' | cut -f2 -d'"' | sed 's/,.*//')
+    local GeoID=$(echo $Ftmpresult | grep '"geo":' | sed 's/.*"geo":\[//' | cut -f2 -d'"' | sed 's/".*//')
+
+    if [ -n "$FRegion" ]; then
+        echo -n -e "\r Tiktok Region:\t\t\t\t${Font_Yellow}Yes (Region: ${FRegion} City: ${FCity} GeoID: ${GeoID})\n"
+        return
+    fi
+
+    # 如果第一种方式未获取到信息，则尝试第二种方式：增加 gzip 处理
+    local STmpresult=$(curl ${CURL_DEFAULT_OPTS} --user-agent "${UA_BROWSER}" -sL --max-time 10 -H "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9" -H "Accept-Encoding: gzip" -H "Accept-Language: en" "https://www.tiktok.com" | gunzip 2>/dev/null)
+    local SRegion=$(echo $STmpresult | grep '"region":' | sed 's/.*"region"//' | cut -f2 -d'"')
+    local SCity=$(echo $STmpresult | grep '"geoCity":' | sed 's/.*"City"://' | cut -f2 -d'"' | sed 's/,.*//')
+    local GeoID2=$(echo $STmpresult | grep '"geo":' | sed 's/.*"geo":\[//' | cut -f2 -d'"' | sed 's/".*//')
+    if [ -n "$SRegion" ]; then
+        echo -n -e "\r Tiktok Region:\t\t\t\t${Font_Yellow}Yes (Region: ${SRegion} City: ${SCity} GeoID: ${GeoID2})  ${Font_Red}可能为IDC IP${Font_Suffix}\n"
+    else
+        echo -n -e "\r Tiktok Region:\t\t\t\t${Font_Red}Failed${Font_Suffix}\n"
+    fi
+
 }
 
-
-
-function inputOptions() {
-
-    while :; do
-        if [ "$LANGUAGE" == 'en' ]; then
-            echo -e "${Font_Blue}Please Select Test Region or Press ENTER to Test All Regions${Font_Suffix}"
-            echo -e "${Font_SkyBlue}Input Number  [1]: [ Multination + Taiwan ]${Font_Suffix}"
-            echo -e "${Font_SkyBlue}Input Number  [2]: [ Multination + Hong Kong ]${Font_Suffix}"
-            echo -e "${Font_SkyBlue}Input Number  [3]: [ Multination + Japan ]${Font_Suffix}"
-            echo -e "${Font_SkyBlue}Input Number  [4]: [ Multination + North America ]${Font_Suffix}"
-            echo -e "${Font_SkyBlue}Input Number  [5]: [ Multination + South America ]${Font_Suffix}"
-            echo -e "${Font_SkyBlue}Input Number  [6]: [ Multination + Europe ]${Font_Suffix}"
-            echo -e "${Font_SkyBlue}Input Number  [7]: [ Multination + Oceania ]${Font_Suffix}"
-            echo -e "${Font_SkyBlue}Input Number  [8]: [ Multination + Korean ]${Font_Suffix}"
-            echo -e "${Font_SkyBlue}Input Number  [9]: [ Multination + SouthEast Asia ]${Font_Suffix}"
-            echo -e "${Font_SkyBlue}Input Number  [10]: [ Multination + India ]${Font_Suffix}"
-            echo -e "${Font_SkyBlue}Input Number  [11]: [ Multination + Africa ]${Font_Suffix}"
-            echo -e "${Font_SkyBlue}Input Number  [0]: [ Multination Only ]${Font_Suffix}"
-            echo -e "${Font_SkyBlue}Input Number  [88]: [ Instagram Music ]${Font_Suffix}"
-            echo -e "${Font_SkyBlue}Input Number [99]: [ Sport Platforms ]${Font_Suffix}"
-            echo -e "${Font_SkyBlue}Input Number [66]: [ All Platfroms ]${Font_Suffix}"
-            read -p "Please Input the Correct Number or Press ENTER:" num
-        else
-            echo -e "${Font_Blue}请选择检测项目，直接按回车将进行全区域检测${Font_Suffix}"
-            echo -e "${Font_SkyBlue}输入数字  [1]: [ 跨国平台+台湾平台 ]检测${Font_Suffix}"
-            echo -e "${Font_SkyBlue}输入数字  [2]: [ 跨国平台+香港平台 ]检测${Font_Suffix}"
-            echo -e "${Font_SkyBlue}输入数字  [3]: [ 跨国平台+日本平台 ]检测${Font_Suffix}"
-            echo -e "${Font_SkyBlue}输入数字  [4]: [ 跨国平台+北美平台 ]检测${Font_Suffix}"
-            echo -e "${Font_SkyBlue}输入数字  [5]: [ 跨国平台+南美平台 ]检测${Font_Suffix}"
-            echo -e "${Font_SkyBlue}输入数字  [6]: [ 跨国平台+欧洲平台 ]检测${Font_Suffix}"
-            echo -e "${Font_SkyBlue}输入数字  [7]: [跨国平台+大洋洲平台]检测${Font_Suffix}"
-            echo -e "${Font_SkyBlue}输入数字  [8]: [ 跨国平台+韩国平台 ]检测${Font_Suffix}"
-            echo -e "${Font_SkyBlue}输入数字  [9]: [跨国平台+东南亚平台]检测${Font_Suffix}"
-            echo -e "${Font_SkyBlue}输入数字 [10]: [ 跨国平台+印度平台 ]检测${Font_Suffix}"
-            echo -e "${Font_SkyBlue}输入数字 [11]: [ 跨国平台+非洲平台 ]检测${Font_Suffix}"
-            echo -e "${Font_SkyBlue}输入数字  [0]: [   只进行跨国平台  ]检测${Font_Suffix}"
-            echo -e "${Font_SkyBlue}输入数字 [88]: [   Instagram音乐   ]检测${Font_Suffix}"
-            echo -e "${Font_SkyBlue}输入数字 [99]: [   体育直播平台    ]检测${Font_Suffix}"
-            echo -e "${Font_SkyBlue}输入数字 [66]: [     全部平台      ]检测${Font_Suffix}"
-            echo -e "${Font_Purple}输入数字 [69]: [   广告推广投放    ]咨询${Font_Suffix}"
-            read -p "请输入正确数字或直接按回车:" num
-        fi
-
-        if [ -z "$num" ]; then
-            REGION_ID=66
-            break
-        fi
-
-        if ! validate_region_id "$num"; then
-            echo -e "${Font_Red}请输入正确号码！${Font_Suffix}"
-            echo -e "${Font_Red}Please enter the correct number!${Font_Suffix}"
-            delay 3
-            clear
-            continue
-        fi
-
-        REGION_ID=$num
-        break
-    done
-}
 
 function checkPROXY() {
     local proxyType=$(echo "$USE_PROXY" | awk -F'://' '{print $1}' | tr a-z A-Z)
