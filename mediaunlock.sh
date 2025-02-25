@@ -444,64 +444,79 @@ function MediaUnlockTest_DisneyPlus() {
     fi
 
 }
-function MediaUnlockTest_NetflixCDN() {
-    local tmpresult=$(curl $useNIC $usePROXY $xForward -${1} ${ssll} -s --max-time 10 "https://api.fast.com/netflix/speedtest/v2?https=true&token=YXNkZmFzZGxmbnNkYWZoYXNkZmhrYWxm&urlCount=1" 2>&1)
-    if [ -z "$tmpresult" ]; then
-        echo -n -e "\r Netflix Preferred CDN:\t\t\t${Font_Red}Failed${Font_Suffix}\n"
+function RegionTest_NetflixCDN() {
+    local tmpresult=$(curl ${CURL_DEFAULT_OPTS} -s 'https://api.fast.com/netflix/speedtest/v2?https=true&token=YXNkZmFzZGxmbnNkYWZoYXNkZmhrYWxm&urlCount=1' -w '_TAG_%{http_code}' --user-agent "${UA_BROWSER}")
+    local httpCode=$(echo "$tmpresult" | grep '_TAG_' | awk -F'_TAG_' '{print $2}')
+    local respContent=$(echo "$tmpresult" | awk -F'_TAG_' '{print $1}')
+    if [ "$httpCode" == '000' ]; then
+        echo -n -e "\r Netflix Preferred CDN:\t\t\t${Font_Red}Failed (Network Connection)${Font_Suffix}\n"
         return
-    elif [ -n "$(echo $tmpresult | grep '>403<')" ]; then
+    fi
+    if [ "$httpCode" == '403' ]; then
         echo -n -e "\r Netflix Preferred CDN:\t\t\t${Font_Red}Failed (IP Banned By Netflix)${Font_Suffix}\n"
         return
     fi
 
-    local CDNAddr=$(echo $tmpresult | sed 's/.*"url":"//' | cut -f3 -d"/")
-    if [[ "$1" == "6" ]]; then
-        nslookup -q=AAAA $CDNAddr >~/v6_addr.txt
-        ifAAAA=$(cat ~/v6_addr.txt | grep 'AAAA address' | awk '{print $NF}')
-        if [ -z "$ifAAAA" ]; then
-            CDNIP=$(cat ~/v6_addr.txt | grep Address | sed -n '$p' | awk '{print $NF}')
-        else
-            CDNIP=${ifAAAA}
+    local cdnDomain=$(echo "$respContent" | grep -woP '"url":"\K[^"]+' | awk -F'[/:]' '{print $4}')
+    if [ -z "$cdnDomain" ]; then
+        echo -n -e "\r Netflix Preferred CDN:\t\t\t${Font_Red}Failed (Error: PAGE ERROR)${Font_Suffix}\n"
+        return
+    fi
+
+    if [ "${USE_IPV6}" == 1 ]; then
+        local cdnIP=$(resolve_ip_address "$cdnDomain" 'AAAA')
+    else
+        local cdnIP=$(resolve_ip_address "$cdnDomain" 'A')
+    fi
+
+    if [ -z "$cdnIP" ]; then
+        echo -n -e "\r Netflix Preferred CDN:\t\t\t${Font_Red}Failed (CDN IP Not Found)${Font_Suffix}\n"
+        return
+    fi
+
+    if ! validate_intranet "$cdnIP"; then
+        local tmpresult1=$(curl ${CURL_DEFAULT_OPTS} -s "https://api.ip.sb/geoip/${cdnIP}" -H 'accept: */*;q=0.8,application/signed-exchange;v=b3;q=0.7' -H 'accept-language: en-US,en;q=0.9' -H "sec-ch-ua: ${UA_SEC_CH_UA}" -H 'sec-ch-ua-mobile: ?0' -H 'sec-ch-ua-platform: "Windows"' -H 'sec-fetch-dest: document' -H 'sec-fetch-mode: navigate' -H 'sec-fetch-site: none' -H 'sec-fetch-user: ?1' -H 'upgrade-insecure-requests: 1' --user-agent "${UA_BROWSER}")
+        if [ -z "$tmpresult1" ]; then
+            echo -n -e "\r Netflix Preferred CDN:\t\t\t${Font_Red}Failed (Network Connection 1)${Font_Suffix}\n"
+            return
+        fi
+
+        local cdnISP=$(echo "$tmpresult1" | grep -woP '"isp"\s{0,}:\s{0,}"\K[^"]+')
+        if [ -z "$cdnISP" ]; then
+            echo -n -e "\r Netflix Preferred CDN:\t\t\t${Font_Red}Failed (Error: No ISP Info Found)${Font_Suffix}\n"
+            return
         fi
     else
-        CDNIP=$(nslookup $CDNAddr | sed '/^\s*$/d' | awk 'END {print}' | awk '{print $2}')
+        cdnISP='Hidden by a VPN'
     fi
 
-    if [ -z "$CDNIP" ]; then
-        echo -n -e "\r Netflix Preferred CDN:\t\t\t${Font_Red}Failed (CDN IP Not Found)${Font_Suffix}\n"
-        rm -rf ~/v6_addr.txt
-        return
-    fi
+    local iata=$(echo "$cdnDomain" | cut -f3 -d'-' | sed 's/.\{3\}$//' | tr a-z A-Z)
 
-    local CDN_ISP=$(curl $useNIC $xForward --user-agent "${UA_Browser}" -s --max-time 20 "https://api.ip.sb/geoip/$CDNIP" 2>&1 | python -m json.tool 2>/dev/null | grep 'isp' | cut -f4 -d'"')
-    local iata=$(echo $CDNAddr | cut -f3 -d"-" | sed 's/.\{3\}$//' | tr [:lower:] [:upper:])
-
-    #local IATACode2=$(curl -s --retry 3 --max-time 10 "https://raw.githubusercontent.com/lmc999/RegionRestrictionCheck/main/reference/IATACode2.txt" 2>&1)
-
-    local isIataFound1=$(echo "$IATACode" | grep $iata)
-    local isIataFound2=$(echo "$IATACode2" | grep $iata)
+    # local IATACODE2=$(curl ${CURL_DEFAULT_OPTS} -s "https://raw.githubusercontent.com/lmc999/RegionRestrictionCheck/main/reference/IATACODE2.txt" 2>&1)
+    local isIataFound1=$(echo "$IATACODE" | grep -w "$iata")
+    local isIataFound2=$(echo "$IATACODE2" | grep -w "$iata")
 
     if [ -n "$isIataFound1" ]; then
-        local lineNo=$(echo "$IATACode" | cut -f3 -d"|" | sed -n "/${iata}/=")
-        local location=$(echo "$IATACode" | awk "NR==${lineNo}" | cut -f1 -d"|" | sed -e 's/^[[:space:]]*//')
-    elif [ -z "$isIataFound1" ] && [ -n "$isIataFound2" ]; then
-        local lineNo=$(echo "$IATACode2" | awk '{print $1}' | sed -n "/${iata}/=")
-        local location=$(echo "$IATACode2" | awk "NR==${lineNo}" | cut -f2 -d"," | sed -e 's/^[[:space:]]*//' | tr [:upper:] [:lower:] | sed 's/\b[a-z]/\U&/g')
+        local location=$(echo "$IATACODE" | grep -w "$iata" | awk -F'|' '{print $1}' | awk '{$1=$1; print}')
+    fi
+    if [ -z "$isIataFound1" ] && [ -n "$isIataFound2" ]; then
+        local location=$(echo "$IATACODE2" | grep -w "$iata" | awk -F',' '{print $2}' | awk '{$1=$1; print}' | tr A-Z a-z | sed 's/\b[a-z]/\U&/g')
     fi
 
-    if [ -n "$location" ] && [[ "$CDN_ISP" == "Netflix Streaming Services" ]]; then
-        echo -n -e "\r Netflix Preferred CDN:\t\t\t${Font_Green}$location ${Font_Suffix}\n"
-        rm -rf ~/v6_addr.txt
-        return
-    elif [ -n "$location" ] && [[ "$CDN_ISP" != "Netflix Streaming Services" ]]; then
-        echo -n -e "\r Netflix Preferred CDN:\t\t\t${Font_Yellow}Associated with [$CDN_ISP] in [$location]${Font_Suffix}\n"
-        rm -rf ~/v6_addr.txt
-        return
-    elif [ -n "$location" ] && [ -z "$CDN_ISP" ]; then
-        echo -n -e "\r Netflix Preferred CDN:\t\t\t${Font_Red}No ISP Info Founded${Font_Suffix}\n"
-        rm -rf ~/v6_addr.txt
+    if [ -z "$location" ]; then
+        echo -n -e "\r Netflix Preferred CDN:\t\t\t${Font_Red}Failed (Error: IATA CODE ERROR)${Font_Suffix}\n"
         return
     fi
+
+    if [ "$cdnISP" == 'Netflix Streaming Services' ]; then
+        echo -n -e "\r Netflix Preferred CDN:\t\t\t${Font_Green}${location}${Font_Suffix}\n"
+        return
+    else
+        echo -n -e "\r Netflix Preferred CDN:\t\t\t${Font_Yellow}[${cdnISP}] in [${location}]${Font_Suffix}\n"
+        return
+    fi
+
+    echo -n -e "\r Netflix Preferred CDN:\t\t\t${Font_Red}Failed (Error: Unknown)${Font_Suffix}\n"
 }
 function MediaUnlockTest_Netflix() {
     local tmpresult1=$(curl $useNIC $usePROXY $xForward -${1} --user-agent "${UA_Browser}" -fsL  --max-time 10 "https://www.netflix.com/title/81280792" 2>&1)
