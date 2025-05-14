@@ -21,7 +21,7 @@ USERNAME=""              # SOCKS5 用户名
 PASSWORD=""              # SOCKS5 密码
 INTERFACE=""             # 网卡名称，如果为空则自动检测
 CONFIG_FILE="xray_config.json"
-XRAY_VERSION="v25.1.30"  # xray 版本
+XRAY_VERSION="v25.4.30"  # xray 版本
 XRAY_ZIP="xray-linux-64.zip"
 DOWNLOAD_URL="https://github.com/XTLS/Xray-core/releases/download/${XRAY_VERSION}/${XRAY_ZIP}"
 
