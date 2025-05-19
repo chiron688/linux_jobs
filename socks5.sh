@@ -1,4 +1,7 @@
 #!/bin/bash
+# 始终在脚本自身目录工作，避免文件写到 /root
+cd "$(dirname "$0")"
+
 # 自动安装依赖、下载 xray、生成配置文件并后台启动 xray
 # 功能说明：
 # 1. 自动检测并安装 curl/wget、unzip、lsof（检测端口占用）。
