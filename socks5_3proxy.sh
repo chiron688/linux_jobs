@@ -17,13 +17,19 @@ TABLE_BASE=100
 SERVICE_FILE="/etc/systemd/system/3proxy.service"
 UNINSTALL_SCRIPT="/usr/local/bin/uninstall_3proxy.sh"
 
-while getopts "p:u:w:i:" opt; do
+SILENT=0
+while getopts "p:u:w:i:-:" opt; do
   case $opt in
     p) BASE_PORT="$OPTARG";;
     u) USERNAME="$OPTARG";;
     w) PASSWORD="$OPTARG";;
     i) INTERFACE="$OPTARG";;
-    *) echo "Usage: $0 [-p port] [-u username] [-w password] [-i interface]"; exit 1;;
+    -)
+      case "$OPTARG" in
+        silent) SILENT=1;;
+        *) echo "Unknown option --$OPTARG"; exit 1;;
+      esac;;
+    *) echo "Usage: $0 [-p port] [-u username] [-w password] [-i interface] [--silent]"; exit 1;;
   esac
 done
 
@@ -65,7 +71,8 @@ if [[ "$OS" == Linux* ]]; then
 
   URL="https://github.com/3proxy/3proxy/releases/download/$VERSION/$FILE"
   echo "下载 $URL"
-  curl -L "$URL" -o "$FILE"
+  if [ "$SILENT" -eq 0 ]; then echo "下载 $URL"; fi
+curl -sSL "$URL" -o "$FILE"
   eval "$INSTALL"
 
 elif [[ "$OS" =~ CYGWIN*|MINGW*|MSYS* ]]; then
@@ -107,7 +114,7 @@ setup_route_and_firewall() {
 }
 
 mkdir -p "$CONFIG_DIR"
-echo "生成配置: $CONFIG_FILE"
+if [ "$SILENT" -eq 0 ]; then echo "生成配置: $CONFIG_FILE"; fi
 cat > "$CONFIG_FILE" <<EOF
 daemon
 maxconn 10000
@@ -140,8 +147,8 @@ EOF
 
 systemctl daemon-reexec
 systemctl daemon-reload
-systemctl enable 3proxy
-systemctl restart 3proxy
+systemctl enable 3proxy >/dev/null
+systemctl restart 3proxy >/dev/null
 
 cat > "$UNINSTALL_SCRIPT" <<EOF
 #!/bin/bash
@@ -168,26 +175,39 @@ echo "卸载完成"
 EOF
 chmod +x "$UNINSTALL_SCRIPT"
 
-echo "\n验证 UDP 与出口 IP："
+echo -e "
+=============================="
+echo "✅ 验证 UDP 与出口 IP"
+echo -e "=============================="
 for ((i=0; i<${#ips[@]}; i++)); do
   port=$((BASE_PORT + i))
   ip=${ips[$i]}
-  echo "测试端口 $port（$ip） UDP ..."
+  printf "  [%02d] 端口 %-5s 出口 IP: %-15s  ==> " "$i" "$port" "$ip"
   if command -v torsocks &>/dev/null; then
     conf="/tmp/torsocks_$port.conf"
-    echo -e "server = 127.0.0.1\nserver_port = $port\nserver_type = 5\nuser = $USERNAME\npass = $PASSWORD" > "$conf"
-    TORSOCKS_CONF_FILE="$conf" torsocks dig +short @8.8.8.8 google.com || echo "❌ $port UDP 查询失败"
+    echo -e "server = 127.0.0.1
+server_port = $port
+server_type = 5
+user = $USERNAME
+pass = $PASSWORD" > "$conf"
+    TORSOCKS_CONF_FILE="$conf" torsocks dig +short @8.8.8.8 google.com >/dev/null && echo "✅ UDP 正常" || echo "❌ UDP 查询失败"
     rm -f "$conf"
   else
     echo "⚠️ 未检测 torsocks，跳过"
   fi
 done
 
+echo -e "
+=============================="
+echo "✅ 代理列表"
+echo -e "=============================="
 PUBIP=$(curl -s ifconfig.me || echo "<YOUR_IP>")
-echo "\n代理列表："
 for ((i=0; i<${#ips[@]}; i++)); do
   port=$((BASE_PORT + i))
-  echo "socks5://$USERNAME:$PASSWORD@$PUBIP:$port"
+  echo "  socks5://$USERNAME:$PASSWORD@$PUBIP:$port"
 done
 
-echo -e "\n✅ 安装完成，使用 systemctl restart 3proxy 管理，卸载运行 $UNINSTALL_SCRIPT"
+if [ "$SILENT" -eq 0 ]; then
+  echo -e "
+✅ 安装完成，使用 [1msystemctl restart 3proxy[0m 管理，卸载运行 [1m$UNINSTALL_SCRIPT[0m"
+fi
