@@ -192,5 +192,36 @@ function MediaUnlockTest_Tiktok_Region() {
     fi
 }
 
+function CheckTikTokConnectivity() {
+    echo "[INFO] 正在检查 TikTok 连通性..."
+
+    # 第一步：ping 快速检测网络/DNS 正常性（不一定成功）
+    if ! ping -c 3 www.tiktok.com >/dev/null 2>&1; then
+        echo "[WARN] 无法 ping 通 www.tiktok.com，可能网络或 DNS 异常，继续尝试 curl 检查..."
+    else
+        echo "[✓] ping www.tiktok.com 成功，继续进行 HTTP 检查..."
+    fi
+
+    # 第二步：curl 检查实际 HTTP 可达性
+    for i in {1..3}; do
+        local status_code
+        status_code=$(curl $useNIC $usePROXY $xForward \
+            --user-agent "$UA_Browser" -s -o /dev/null -w "%{http_code}" \
+            --max-time 10 "https://www.tiktok.com/")
+
+        if [[ "$status_code" =~ ^2 ]]; then
+            echo "[✓] TikTok 可访问，状态码: $status_code"
+            return
+        fi
+
+        echo "[INFO] 第 $i 次尝试 TikTok 失败，状态码: $status_code"
+        sleep 1
+    done
+
+    echo "[✗] 无法连接 TikTok，状态码: $status_code"
+    exit 1
+}
+
 CheckPROXY
+CheckTikTokConnectivity
 MediaUnlockTest_Tiktok_Region
