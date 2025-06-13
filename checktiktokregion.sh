@@ -93,7 +93,9 @@ mkdir -p "$CACHE_DIR"
 fetch_and_cache() {
     local url="$1"
     local path="$2"
-    if [ ! -f "$path" ]; then
+    local expire_minutes=1440  # 1 day
+
+    if [ ! -f "$path" ] || find "$path" -mmin +$expire_minutes >/dev/null; then
         curl -s --retry 3 --max-time 10 -o "$path" "$url"
     fi
     cat "$path"
@@ -121,8 +123,8 @@ function CheckPROXY() {
             *)         proxyType="" ;;
         esac
 
-        curl $useNIC $usePROXY -sS --user-agent "$UA_Browser" ip.sb > "$result_file1" &
-        curl $useNIC $usePROXY -sS --user-agent "$UA_Browser" https://1.0.0.1/cdn-cgi/trace > "$result_file2" &
+        curl $useNIC $usePROXY -sS ${NetworkType:+-$NetworkType} --user-agent "$UA_Browser" ip.sb > "$result_file1" &
+        curl $useNIC $usePROXY -sS ${NetworkType:+-$NetworkType} --user-agent "$UA_Browser" https://1.0.0.1/cdn-cgi/trace > "$result_file2" &
         wait
 
         local result1=$(cat "$result_file1")
@@ -153,14 +155,14 @@ function extract_json_field() {
 }
 
 function fallback_gzip_parse() {
-    curl $useNIC $usePROXY $xForward --user-agent "$UA_Browser" -sL --max-time 10 \
+    curl $useNIC $usePROXY $xForward --user-agent "$UA_Browser" -sL ${NetworkType:+-$NetworkType} --max-time 10 \
         -H "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9" \
         -H "Accept-Encoding: gzip" \
         -H "Accept-Language: en" "https://www.tiktok.com" | gzip -dc 2>/dev/null
 }
 
 function MediaUnlockTest_Tiktok_Region() {
-    local Ftmpresult=$(curl $useNIC $usePROXY $xForward --user-agent "$UA_Browser" -s --max-time 10 "https://www.tiktok.com/")
+    local Ftmpresult=$(curl $useNIC $usePROXY $xForward --user-agent "$UA_Browser" -s ${NetworkType:+-$NetworkType} --max-time 10 "https://www.tiktok.com/")
 
     if [[ "$Ftmpresult" == curl* ]]; then
         echo '{"status":"Failed", "reason":"Network Connection"}'
