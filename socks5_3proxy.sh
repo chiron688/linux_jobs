@@ -1,14 +1,6 @@
 #!/bin/bash
 
 # === 3proxy 多 IP socks5 出口脚本 一键安装器（自动识别系统架构并下载安装预编译包） ===
-# 功能：
-# 1. 安装依赖
-# 2. 自动下载 3proxy 最新适配的预编译包并安装
-# 3. 自动生成 3proxy.cfg
-# 4. 添加 iptables + ip rule + ip route 绑定出站 IP
-# 5. 自动添加 rt_tables 条目
-# 6. 写入 systemd 服务
-# 7. 提供卸载脚本
 
 set -e
 
@@ -24,7 +16,6 @@ MARK_BASE=100
 TABLE_BASE=100
 SERVICE_FILE="/etc/systemd/system/3proxy.service"
 UNINSTALL_SCRIPT="/usr/local/bin/uninstall_3proxy.sh"
-VERSION="0.9.5"
 
 while getopts "p:u:w:i:" opt; do
   case $opt in
@@ -44,9 +35,12 @@ install_package() {
   else echo "请手动安装 $pkg"; exit 1; fi
 }
 
-for cmd in ip ss iptables awk grep curl tar make gcc unzip; do
+for cmd in ip ss iptables awk grep curl tar make gcc unzip jq; do
   command -v "$cmd" >/dev/null 2>&1 || install_package "$cmd"
 done
+
+# === 自动获取最新版本号 ===
+VERSION=$(curl -s https://api.github.com/repos/3proxy/3proxy/releases/latest | jq -r .tag_name)
 
 # === 自动识别系统并下载预编译包 ===
 OS=$(uname -s)
