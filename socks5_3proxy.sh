@@ -148,17 +148,20 @@ cat > "$UNINSTALL_SCRIPT" <<EOF
 systemctl stop 3proxy
 systemctl disable 3proxy
 rm -f "$SERVICE_FILE" "$CONFIG_FILE"
-for i in \$(seq $MARK_BASE $((MARK_BASE + \${#ips[@]} + 10))); do
-  ip rule del fwmark \$i table \$i 2>/dev/null
-  ip route flush table \$i 2>/dev/null
-done
-iptables -t mangle -S OUTPUT | grep -- '--set-mark' | awk '{for (i=1;i<=NF;i++) if (\$i=="--set-mark") print \$(i+1)}' | while read mark; do
+
+# 清除策略路由和表项
+ip rule | grep "fwmark" | awk '{print $3, $5}' | while read mark table; do
+  ip rule del fwmark \$mark table \$table 2>/dev/null
+  ip route flush table \$table 2>/dev/null
+  sed -i "/\$table proxy_/d" /etc/iproute2/rt_tables
   iptables -t mangle -D OUTPUT -m mark --mark \$mark -j MARK --set-mark \$mark 2>/dev/null
   iptables -t mangle -D OUTPUT -p udp -m mark --mark \$mark -j MARK --set-mark \$mark 2>/dev/null
   iptables -t mangle -D OUTPUT -p tcp -m mark --mark \$mark -j MARK --set-mark \$mark 2>/dev/null
-  iptables -t nat -D PREROUTING -p udp --dport \$((10000 + mark - $MARK_BASE)) -j DNAT --to-destination ${ips[\$((mark - $MARK_BASE))]}:\$((BASE_PORT + mark - $MARK_BASE)) 2>/dev/null
-done
-sed -i "/proxy_/d" /etc/iproute2/rt_tables
+  dport=\$((10000 + mark - $MARK_BASE))
+  iptables -t nat -D PREROUTING -p udp --dport \$dport -j DNAT --to-destination 127.0.0.1:\$((BASE_PORT + mark - $MARK_BASE)) 2>/dev/null
+  true
+  done
+
 systemctl daemon-reexec
 systemctl daemon-reload
 echo "卸载完成"
