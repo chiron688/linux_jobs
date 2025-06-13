@@ -6,13 +6,13 @@ for dep in jq curl gzip; do
     if ! command -v $dep >/dev/null 2>&1; then
         echo "[INFO] '$dep' not found. Attempting to install..."
         if command -v apt-get >/dev/null 2>&1; then
-            sudo apt-get update && sudo apt-get install -y $dep
+            apt-get update && sudo apt-get install -y $dep
         elif command -v yum >/dev/null 2>&1; then
-            sudo yum install -y $dep
+            yum install -y $dep
         elif command -v pacman >/dev/null 2>&1; then
-            sudo pacman -Sy $dep
+            pacman -Sy $dep
         elif command -v apk >/dev/null 2>&1; then
-            sudo apk add --no-cache $dep
+            apk add --no-cache $dep
         else
             echo "[ERROR] Package manager not supported. Please install '$dep' manually."
             exit 1
