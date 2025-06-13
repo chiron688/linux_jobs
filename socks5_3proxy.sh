@@ -45,6 +45,15 @@ for cmd in ip ss iptables awk grep curl tar make gcc unzip jq; do
   command -v "$cmd" >/dev/null 2>&1 || install_package "$cmd"
 done
 
+# === 交互式输入账号密码 ===
+if [ -z "$USERNAME" ]; then
+  read -rp "请输入 socks5 用户名: " USERNAME
+fi
+if [ -z "$PASSWORD" ]; then
+  read -rsp "请输入 socks5 密码: " PASSWORD
+  echo
+fi
+
 # === 自动获取最新版本号 ===
 VERSION=$(curl -s https://api.github.com/repos/3proxy/3proxy/releases/latest | jq -r .tag_name)
 
