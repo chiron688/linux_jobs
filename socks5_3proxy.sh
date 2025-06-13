@@ -1,9 +1,9 @@
 #!/bin/bash
 
-# === 3proxy 多 IP socks5 出口脚本 一键安装器 ===
+# === 3proxy 多 IP socks5 出口脚本 一键安装器（自动识别系统架构并下载安装预编译包） ===
 # 功能：
 # 1. 安装依赖
-# 2. 自动安装 3proxy（二进制）
+# 2. 自动下载 3proxy 最新适配的预编译包并安装
 # 3. 自动生成 3proxy.cfg
 # 4. 添加 iptables + ip rule + ip route 绑定出站 IP
 # 5. 自动添加 rt_tables 条目
@@ -12,20 +12,19 @@
 
 set -e
 
-# === 默认参数（可通过命令行覆盖） ===
 BASE_PORT=30000
 USERNAME="user"
 PASSWORD="pass"
 INTERFACE=""
 CONFIG_DIR="/etc/3proxy"
 CONFIG_FILE="$CONFIG_DIR/3proxy.cfg"
-PROXY_BIN="/usr/local/bin/3proxy"
+PROXY_BIN="/usr/bin/3proxy"
 PROXY_LOG="/var/log/3proxy.log"
 MARK_BASE=100
 TABLE_BASE=100
 SERVICE_FILE="/etc/systemd/system/3proxy.service"
 UNINSTALL_SCRIPT="/usr/local/bin/uninstall_3proxy.sh"
-PROXY_URL="https://github.com/z3APA3A/3proxy/archive/refs/tags/0.9.5.tar.gz"
+VERSION="0.9.5"
 
 while getopts "p:u:w:i:" opt; do
   case $opt in
@@ -45,21 +44,49 @@ install_package() {
   else echo "请手动安装 $pkg"; exit 1; fi
 }
 
-for cmd in ip ss iptables awk grep curl tar make gcc; do
+for cmd in ip ss iptables awk grep curl tar make gcc unzip; do
   command -v "$cmd" >/dev/null 2>&1 || install_package "$cmd"
 done
 
-if [ ! -f "$PROXY_BIN" ]; then
-  echo "安装 3proxy ..."
-  TMPDIR="$(mktemp -d)"
-  trap 'rm -rf "$TMPDIR"' EXIT
-  cd "$TMPDIR"
-  curl -L "$PROXY_URL" -o 3proxy.tar.gz
-  tar -xf 3proxy.tar.gz
-  cd 3proxy-*/src
-  make -f Makefile.Linux
-  sudo cp 3proxy "$PROXY_BIN"
-  sudo chmod +x "$PROXY_BIN"
+# === 自动识别系统并下载预编译包 ===
+OS=$(uname -s)
+ARCH=$(uname -m)
+
+if [[ "$OS" == Linux* ]]; then
+  if [[ "$ARCH" == "x86_64" ]]; then ARCH_KEY="x86_64"
+  elif [[ "$ARCH" == "aarch64" ]]; then ARCH_KEY="aarch64"
+  elif [[ "$ARCH" == arm* ]]; then ARCH_KEY="arm"
+  else echo "不支持的 Linux 架构: $ARCH"; exit 1
+  fi
+
+  if command -v apt-get >/dev/null 2>&1; then
+    FILE="3proxy-$VERSION.${ARCH_KEY}.deb"
+    INSTALL="sudo dpkg -i $FILE || sudo apt-get install -f -y"
+  elif command -v yum >/dev/null 2>&1 || command -v dnf >/dev/null 2>&1; then
+    FILE="3proxy-$VERSION.${ARCH_KEY}.rpm"
+    INSTALL="sudo rpm -ivh $FILE"
+  else
+    echo "未知包管理器，无法选择 .deb 或 .rpm"; exit 1
+  fi
+
+  URL="https://github.com/3proxy/3proxy/releases/download/$VERSION/$FILE"
+  echo "下载 $URL"
+  curl -L "$URL" -o "$FILE"
+  eval "$INSTALL"
+
+elif [[ "$OS" =~ CYGWIN*|MINGW*|MSYS* ]]; then
+  if [[ "$ARCH" == *"64" ]]; then FILE="3proxy-$VERSION-x64.zip"
+  elif [[ "$ARCH" == *"86" || "$ARCH" == "i686" ]]; then FILE="3proxy-$VERSION-i386.zip"
+  else FILE="3proxy-$VERSION-arm64.zip"
+  fi
+  URL="https://github.com/3proxy/3proxy/releases/download/$VERSION/$FILE"
+  echo "下载 $URL"
+  curl -L "$URL" -o "$FILE"
+  unzip "$FILE" -d 3proxy-windows
+  PROXY_BIN="$(realpath 3proxy-windows/3proxy.exe)"
+else
+  echo "不支持的操作系统: $OS"
+  exit 1
 fi
 
 [ -z "$INTERFACE" ] && INTERFACE=$(ip route | awk '/default/ {print $5; exit}')
@@ -67,8 +94,6 @@ fi
 
 ips=($(ip -4 addr show "$INTERFACE" | awk '/inet / {print $2}' | cut -d/ -f1))
 [ ${#ips[@]} -eq 0 ] && echo "无可用 IPv4 地址" && exit 1
-
-used_ports=$(ss -lnt | awk 'NR>1 {split($4,a,":"); print a[length(a)]}')
 
 setup_route_and_firewall() {
   local i=$1
@@ -103,7 +128,6 @@ for i in "${!ips[@]}"; do
   ip="${ips[$i]}"
   echo -e "auth strong\nallow $USERNAME\nsocks -p$port -i$ip -e$ip" >> "$CONFIG_FILE"
   setup_route_and_firewall $i
-
 done
 
 cat > "$SERVICE_FILE" <<EOF
@@ -130,7 +154,7 @@ cat > "$UNINSTALL_SCRIPT" <<EOF
 systemctl stop 3proxy
 systemctl disable 3proxy
 rm -f "$SERVICE_FILE" "$CONFIG_FILE"
-for i in \$(seq $MARK_BASE $((MARK_BASE + ${#ips[@]} + 10))); do
+for i in \$(seq $MARK_BASE $((MARK_BASE + \${#ips[@]} + 10))); do
   ip rule del fwmark \$i table \$i 2>/dev/null
   ip route flush table \$i 2>/dev/null
 done
@@ -139,7 +163,6 @@ iptables -t mangle -S OUTPUT | grep -- '--set-mark' | awk '{for (i=1;i<=NF;i++) 
   iptables -t mangle -D OUTPUT -p udp -m mark --mark \$mark -j MARK --set-mark \$mark 2>/dev/null
   iptables -t mangle -D OUTPUT -p tcp -m mark --mark \$mark -j MARK --set-mark \$mark 2>/dev/null
   iptables -t nat -D PREROUTING -p udp --dport \$((10000 + mark - $MARK_BASE)) -j DNAT --to-destination ${ips[\$((mark - $MARK_BASE))]}:\$((BASE_PORT + mark - $MARK_BASE)) 2>/dev/null
-
 done
 sed -i "/proxy_/d" /etc/iproute2/rt_tables
 systemctl daemon-reexec
@@ -171,4 +194,3 @@ for ((i=0; i<${#ips[@]}; i++)); do
 done
 
 echo -e "\n✅ 安装完成，使用 systemctl restart 3proxy 管理，卸载运行 $UNINSTALL_SCRIPT"
-
