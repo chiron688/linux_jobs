@@ -25,7 +25,7 @@ MARK_BASE=100
 TABLE_BASE=100
 SERVICE_FILE="/etc/systemd/system/3proxy.service"
 UNINSTALL_SCRIPT="/usr/local/bin/uninstall_3proxy.sh"
-PROXY_URL="https://github.com/z3APA3A/3proxy/releases/download/0.9.4/3proxy-0.9.4.tar.gz"
+PROXY_URL="https://github.com/z3APA3A/3proxy/archive/refs/tags/0.9.5.tar.gz"
 
 while getopts "p:u:w:i:" opt; do
   case $opt in
