@@ -10,6 +10,9 @@
 ```shell
  bash <(curl -L -s raw.githubusercontent.com/chiron688/linux_jobs/main/socks5.sh)
 ```
+```shell
+ bash <(curl -L -s raw.githubusercontent.com/chiron688/linux_jobs/main/socks5_3proxy.sh)
+```
 
 tiktok 解锁检测：
 ```shell
