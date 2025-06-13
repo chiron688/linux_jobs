@@ -87,7 +87,9 @@ fi
 UA_Browser="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
 UA_Dalvik="Dalvik/2.1.0 (Linux; U; Android 9; ALP-AL00 Build/HUAWEIALP-AL00)"
 
-CACHE_DIR="/tmp/media_cache"
+# Use script's own directory as cache directory
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+CACHE_DIR="$SCRIPT_DIR/media_cache"
 mkdir -p "$CACHE_DIR"
 
 fetch_and_cache() {
