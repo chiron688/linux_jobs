@@ -210,7 +210,7 @@ echo -e "
 =============================="
 echo "✅ 代理列表"
 echo -e "=============================="
-PUBIP=$(curl -s ifconfig.me || echo "<YOUR_IP>")
+PUBIP=$(curl -s -4 https://ipv4.icanhazip.com || echo "<YOUR_IPV4>")
 for ((i=0; i<${#ips[@]}; i++)); do
   port=$((BASE_PORT + i))
   echo "  socks5://$USERNAME:$PASSWORD@$PUBIP:$port"
