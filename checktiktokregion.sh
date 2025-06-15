@@ -88,7 +88,15 @@ UA_Browser="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (
 UA_Dalvik="Dalvik/2.1.0 (Linux; U; Android 9; ALP-AL00 Build/HUAWEIALP-AL00)"
 
 # Use script's own directory as cache directory
-SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+if [[ "$0" == "/dev/fd/"* ]]; then
+    SCRIPT_DIR="${TMPDIR:-/tmp}/checktiktokregion"
+else
+    SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+fi
+mkdir -p "$SCRIPT_DIR"
+CACHE_DIR="$SCRIPT_DIR/media_cache"
+mkdir -p "$CACHE_DIR"
+
 CACHE_DIR="$SCRIPT_DIR/media_cache"
 mkdir -p "$CACHE_DIR"
 
