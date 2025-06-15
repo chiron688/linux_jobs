@@ -202,23 +202,6 @@ function CheckTikTokConnectivity() {
         echo "[✓] ping www.tiktok.com 成功，继续进行 HTTP 检查..."
     fi
 
-    # 第二步：curl 检查实际 HTTP 可达性
-    for i in {1..3}; do
-        local status_code
-        status_code=$(curl $useNIC $usePROXY $xForward \
-            --user-agent "$UA_Browser" -s -o /dev/null -w "%{http_code}" \
-            --max-time 10 "https://www.tiktok.com/")
-
-        if [[ "$status_code" =~ ^2 ]]; then
-            echo "[✓] TikTok 可访问，状态码: $status_code"
-            return
-        fi
-
-        echo "[INFO] 第 $i 次尝试 TikTok 失败，状态码: $status_code"
-        sleep 1
-    done
-
-    echo "[✗] 无法连接 TikTok，尝试继续运行状态码: $status_code"
     
 }
 
