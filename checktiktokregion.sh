@@ -193,13 +193,13 @@ function MediaUnlockTest_Tiktok_Region() {
 }
 
 function CheckTikTokConnectivity() {
-    echo "[INFO] 正在检查 TikTok 连通性..."
+    # echo "[INFO] 正在检查 TikTok 连通性..."
 
     # 第一步：ping 快速检测网络/DNS 正常性（不一定成功）
     if ! ping -c 3 www.tiktok.com >/dev/null 2>&1; then
-        echo "[WARN] 无法 ping 通 www.tiktok.com，可能网络或 DNS 异常，继续尝试 curl 检查..."
+        # echo "[WARN] 无法 ping 通 www.tiktok.com，可能网络或 DNS 异常，继续尝试 curl 检查..."
     else
-        echo "[✓] ping www.tiktok.com 成功，继续进行 HTTP 检查..."
+        # echo "[✓] ping www.tiktok.com 成功，继续进行 HTTP 检查..."
     fi
 
     
