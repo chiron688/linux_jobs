@@ -21,6 +21,7 @@ PARSED_OPTIONS=$(getopt -n "$0" -o I:M:E:X:P:T: -- "$@")
 if [ $? -ne 0 ]; then
     exit 1
 fi
+
 eval set -- "$PARSED_OPTIONS"
 
 while true; do
@@ -47,7 +48,6 @@ fi
 
 UA_Browser="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
 
-# Safe cache directory
 if [[ "$0" =~ ^/dev/fd/ ]]; then
     SCRIPT_DIR="${TMPDIR:-/tmp}/checktiktokregion"
 else
@@ -106,53 +106,56 @@ CheckPROXY() {
     fi
 }
 
-extract_json_field() {
-    local content="$1"
-    local key="$2"
-    local value=$(echo "$content" | jq -r ".$key" 2>/dev/null)
-    [ "$value" == "null" ] || [ -z "$value" ] && echo "" || echo "$value"
+safe_jq() {
+    echo "$1" | jq -r "$2" 2>/dev/null || echo ""
 }
 
-fallback_gzip_parse() {
-    curl $useNIC $usePROXY $xForward --user-agent "$UA_Browser" -sL ${NetworkType:+-$NetworkType} --max-time 10 \
-        -H "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9" \
-        -H "Accept-Encoding: gzip" \
-        -H "Accept-Language: en" "https://www.tiktok.com" | gzip -dc 2>/dev/null
-}
-
+# ---------------- main test -----------------------
 MediaUnlockTest_Tiktok_Region() {
-    local Ftmpresult=$(curl $useNIC $usePROXY $xForward --user-agent "$UA_Browser" -s ${NetworkType:+-$NetworkType} --max-time 10 "https://www.tiktok.com/")
+  # fetch explore page
+  local explore_raw_file="$CACHE_DIR/tiktok_explore_raw.txt"
+  curl $useNIC $usePROXY $xForward -s ${NetworkType:+-$NetworkType} --user-agent "$UA_Browser" --max-time 10 \
+       "https://www.tiktok.com/explore" -o "$explore_raw_file"
+  local Fhtml; Fhtml=$(cat "$explore_raw_file")
 
-    if [[ "$Ftmpresult" == curl* ]]; then
-        echo '{"status":"Failed", "reason":"Network Connection"}'
-        return
-    fi
+  # ---------- extract JSON (SIGI_STATE ➜ UNIVERSAL_DATA) ----------
+  local embedded_json
+  embedded_json=$(perl -0777 -ne 'print $1 if /<script id="SIGI_STATE"[^>]*>(.*?)<\/script>/s' "$explore_raw_file")
+  if [ -z "$embedded_json" ]; then
+      embedded_json=$(perl -0777 -ne 'print $1 if /<script id="__UNIVERSAL_DATA_FOR_REHYDRATION__"[^>]*>(.*?)<\/script>/s' "$explore_raw_file")
+  fi
+  if [ -z "$embedded_json" ]; then
+      echo '{"status":"Failed","reason":"Cannot extract embedded JSON"}'
+      return
+  fi
 
-    local FRegion=$(extract_json_field "$Ftmpresult" "region")
-    local FCity=$(extract_json_field "$Ftmpresult" "geoCity")
-    local GeoID=$(extract_json_field "$Ftmpresult" "geo")
+  # ---------- primary paths from geoCity ----------
+  local geoCity region city geoname
+  geoCity=$(safe_jq "$embedded_json" '.geoCity // empty')
+  region=$(safe_jq   "$geoCity" '.Subdivisions // empty')
+  city=$(safe_jq     "$geoCity" '.City // empty')
+  geoname=$(safe_jq  "$geoCity" '.OriginalSubdivisions?[0].GeoNameID // empty')
 
-    if [ -n "$FRegion" ]; then
-        echo "{\"status\":\"Success\", \"Region\":\"$FRegion\", \"City\":\"${FCity:-Unknown}\", \"GeoID\":\"${GeoID:-Unknown}\"}"
-        return
-    fi
+  # ---------- fallback paths (root-level) ----------
+  if [ -z "$region" ];  then region=$(safe_jq "$embedded_json" '.. | .subdivisions?[0] // empty'); fi
+  if [ -z "$city" ];    then city=$(safe_jq   "$embedded_json" '.. | .City? // empty' | head -n1); fi
+  if [ -z "$geoname" ]; then geoname=$(safe_jq "$embedded_json" '.. | .geo?[0] // empty' | head -n1); fi
 
-    local STmpresult=$(fallback_gzip_parse)
-    local SRegion=$(extract_json_field "$STmpresult" "region")
-    local SCity=$(extract_json_field "$STmpresult" "geoCity")
-    local GeoID2=$(extract_json_field "$STmpresult" "geo")
+  # ---------- country code fallback ---------------
+  local region_code
+  region_code=$(safe_jq "$embedded_json" '.. | .region? // empty' | head -n1)
 
-    if [ -n "$SRegion" ]; then
-        echo "{\"status\":\"Success\", \"Region\":\"$SRegion\", \"City\":\"${SCity:-Unknown}\", \"GeoID\":\"${GeoID2:-Unknown}\"}"
-    else
-        echo '{"status":"Failed", "reason":"Region or City not found"}'
-    fi
+  # ---------- output ------------------------------
+  if [[ -n "$region" || -n "$city" || -n "$geoname" ]]; then
+      echo "{\"status\":\"Success\",\"Region\":\"${region:-Unknown}\",\"City\":\"${city:-Unknown}\",\"GeoID\":\"${geoname:-Unknown}\"}"
+  elif [ -n "$region_code" ]; then
+      echo "{\"status\":\"Success\",\"Region\":\"${region_code}\",\"City\":\"\",\"GeoID\":\"\"}"
+  else
+      echo '{"status":"Failed","reason":"Region or City not found"}'
+  fi
 }
 
-CheckTikTokConnectivity() {
-    ping -c 3 www.tiktok.com >/dev/null 2>&1
-}
 
 CheckPROXY
-CheckTikTokConnectivity
+
 MediaUnlockTest_Tiktok_Region
