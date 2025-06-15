@@ -218,8 +218,8 @@ function CheckTikTokConnectivity() {
         sleep 1
     done
 
-    echo "[✗] 无法连接 TikTok，状态码: $status_code"
-    exit 1
+    echo "[✗] 无法连接 TikTok，尝试继续运行状态码: $status_code"
+    
 }
 
 CheckPROXY
