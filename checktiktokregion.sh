@@ -88,17 +88,17 @@ UA_Browser="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (
 UA_Dalvik="Dalvik/2.1.0 (Linux; U; Android 9; ALP-AL00 Build/HUAWEIALP-AL00)"
 
 # Use script's own directory as cache directory
-if [[ "$0" == "/dev/fd/"* ]]; then
+# Determine safe directory for caching
+if [[ "$0" =~ ^/dev/fd/ ]]; then
+    # Running via process substitution (e.g., bash <(curl ...))
     SCRIPT_DIR="${TMPDIR:-/tmp}/checktiktokregion"
 else
     SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 fi
-mkdir -p "$SCRIPT_DIR"
-CACHE_DIR="$SCRIPT_DIR/media_cache"
-mkdir -p "$CACHE_DIR"
 
 CACHE_DIR="$SCRIPT_DIR/media_cache"
 mkdir -p "$CACHE_DIR"
+
 
 fetch_and_cache() {
     local url="$1"
@@ -205,9 +205,9 @@ function CheckTikTokConnectivity() {
 
     # 第一步：ping 快速检测网络/DNS 正常性（不一定成功）
     if ! ping -c 3 www.tiktok.com >/dev/null 2>&1; then
-        # echo "[WARN] 无法 ping 通 www.tiktok.com，可能网络或 DNS 异常，继续尝试 curl 检查..."
+        echo "[WARN] 无法 ping 通 www.tiktok.com，可能网络或 DNS 异常"
     else
-        # echo "[✓] ping www.tiktok.com 成功，继续进行 HTTP 检查..."
+        echo "[✓] ping www.tiktok.com 成功，继续进行 下一步检查"
     fi
 
     
