@@ -8,6 +8,9 @@ set -e
 BASE_PORT=""
 USERNAME=""
 PASSWORD=""
+ADMIN_USERNAME=""
+ADMIN_PASSWORD=""
+ADMIN_PORT="33333"
 INTERFACE=""
 CONFIG_DIR="/etc/3proxy"
 CONFIG_FILE="$CONFIG_DIR/3proxy.cfg"
@@ -138,6 +141,17 @@ validate_password() {
     return 0
 }
 
+# 生成随机密码函数
+generate_random_password() {
+    local length=${1:-12}
+    tr -dc 'A-Za-z0-9!@#$%^&*' < /dev/urandom | head -c $length
+}
+
+# 生成随机用户名函数
+generate_random_username() {
+    echo "admin_$(tr -dc 'a-z0-9' < /dev/urandom | head -c 6)"
+}
+
 # 交互式输入缺失的参数
 interactive_input() {
     if [ "$SILENT" -eq 1 ]; then
@@ -145,6 +159,9 @@ interactive_input() {
         if [ -z "$USERNAME" ] || [ -z "$PASSWORD" ] || [ -z "$BASE_PORT" ]; then
             error_exit "静默模式下必须通过命令行指定用户名(-u)、密码(-w)和端口(-p)"
         fi
+        # 生成随机管理员账号
+        ADMIN_USERNAME=$(generate_random_username)
+        ADMIN_PASSWORD=$(generate_random_password 16)
         return
     fi
     
@@ -184,6 +201,16 @@ interactive_input() {
     if [ -z "$INTERFACE" ]; then
         read -rp "请输入网络接口名称 (留空自动检测): " INTERFACE
     fi
+    
+    # 生成随机管理员账号
+    ADMIN_USERNAME=$(generate_random_username)
+    ADMIN_PASSWORD=$(generate_random_password 16)
+    
+    echo
+    echo "已自动生成Web管理界面账号:"
+    echo "  管理员用户名: $ADMIN_USERNAME"
+    echo "  管理员密码: $ADMIN_PASSWORD"
+    echo "  管理端口: $ADMIN_PORT"
 }
 
 # 验证所有输入参数
@@ -279,6 +306,11 @@ show_config_and_confirm() {
     echo "检测到IP数量: ${#ips[@]}"
     echo "端口范围: $BASE_PORT-$((BASE_PORT + ${#ips[@]} - 1))"
     echo "配置方案: 3proxy应用层绑定（无需复杂路由）"
+    echo
+    echo "Web管理界面配置:"
+    echo "  管理员用户名: $ADMIN_USERNAME"
+    echo "  管理员密码: $(echo "$ADMIN_PASSWORD" | sed 's/./*/g')"
+    echo "  管理端口: $ADMIN_PORT"
     echo
     echo "代理端口分配:"
     for ((i=0; i<${#ips[@]}; i++)); do
@@ -408,6 +440,11 @@ setup_application_binding() {
         log "配置端口 $port -> 出口IP $ip (应用层绑定)"
     done
     
+    # 为Web管理界面添加防火墙规则
+    if ! iptables -C INPUT -p tcp --dport $ADMIN_PORT -j ACCEPT 2>/dev/null; then
+        iptables -A INPUT -p tcp --dport $ADMIN_PORT -j ACCEPT 2>/dev/null || true
+    fi
+    
     log "应用层绑定配置完成，无需复杂路由表"
 }
 
@@ -425,6 +462,12 @@ nserver 1.1.1.1
 nscache 65536
 timeouts 1 5 30 60 180 1800 15 60
 users ${USERNAME}:CL:${PASSWORD}
+users ${ADMIN_USERNAME}:CL:${ADMIN_PASSWORD}
+
+# Web管理界面
+auth strong
+allow ${ADMIN_USERNAME}
+admin -p${ADMIN_PORT}
 
 EOF
 
@@ -557,10 +600,17 @@ show_results() {
     done
     
     echo
+    echo "🌐 Web管理界面信息:"
+    echo "  管理界面地址: http://$pubip:$ADMIN_PORT"
+    echo "  管理员用户名: $ADMIN_USERNAME"
+    echo "  管理员密码: $ADMIN_PASSWORD"
+    echo "  功能: 用户管理、配置修改、连接监控"
+    
+    echo
     echo "代理服务器信息:"
     echo "  服务器IP: $pubip"
-    echo "  用户名: $USERNAME"
-    echo "  密码: $(echo "$PASSWORD" | sed 's/./*/g')"
+    echo "  SOCKS5用户名: $USERNAME"
+    echo "  SOCKS5密码: $(echo "$PASSWORD" | sed 's/./*/g')"
     echo "  端口范围: $BASE_PORT-$((BASE_PORT + ${#ips[@]} - 1))"
     echo "  代理数量: ${#ips[@]} 个"
     echo "  配置方案: 3proxy应用层绑定"
@@ -579,8 +629,14 @@ show_results() {
     echo -e "\n使用说明:"
     echo "  1. 复制上面的 socks5:// 链接到你的代理客户端"
     echo "  2. 每个端口对应不同的出口IP地址"
-    echo "  3. 应用层绑定方案，配置简单，性能更好"
-    echo "  4. 建议保存这些信息以备后用"
+    echo "  3. 通过Web管理界面可以管理用户和查看状态"
+    echo "  4. 应用层绑定方案，配置简单，性能更好"
+    echo "  5. 建议保存这些信息以备后用"
+    
+    echo -e "\n⚠️  重要提醒:"
+    echo "  - 请妥善保管Web管理界面的登录凭据"
+    echo "  - 建议定期更改管理员密码"
+    echo "  - 管理界面仅限可信IP访问"
 }
 
 # 验证安装并输出结果
@@ -619,7 +675,7 @@ verify_and_show_results() {
     if [ "$SILENT" -eq 0 ]; then
         show_results
     else
-        # 静默模式下也输出基本的socks5链接
+        # 静默模式下也输出基本信息
         local pubip
         pubip=$(curl -s -4 https://ipv4.icanhazip.com || echo "<YOUR_IPV4>")
         echo "SOCKS5代理安装完成（应用层绑定），链接如下:"
@@ -627,6 +683,10 @@ verify_and_show_results() {
             local port=$((BASE_PORT + i))
             echo "socks5://$USERNAME:$PASSWORD@$pubip:$port"
         done
+        echo
+        echo "Web管理界面: http://$pubip:$ADMIN_PORT"
+        echo "管理员账号: $ADMIN_USERNAME"
+        echo "管理员密码: $ADMIN_PASSWORD"
     fi
 }
 
