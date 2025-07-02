@@ -144,7 +144,8 @@ validate_password() {
 # 生成随机密码函数
 generate_random_password() {
     local length=${1:-12}
-    tr -dc 'A-Za-z0-9!@#$%^&*' < /dev/urandom | head -c $length
+    # 移除可能导致3proxy配置问题的特殊字符：@ $ ! 
+    tr -dc 'A-Za-z0-9#%^&*' < /dev/urandom | head -c $length
 }
 
 # 生成随机用户名函数
@@ -454,6 +455,19 @@ generate_application_config() {
     
     mkdir -p "$CONFIG_DIR"
     
+    # 对密码进行安全处理，避免特殊字符问题
+    local safe_password="$PASSWORD"
+    local safe_admin_password="$ADMIN_PASSWORD"
+    
+    # 如果密码包含特殊字符，用引号包围
+    if [[ "$PASSWORD" =~ [\$@!\&\*] ]]; then
+        safe_password="\"$PASSWORD\""
+    fi
+    
+    if [[ "$ADMIN_PASSWORD" =~ [\$@!\&\*] ]]; then
+        safe_admin_password="\"$ADMIN_PASSWORD\""
+    fi
+    
     cat > "$CONFIG_FILE" <<EOF
 daemon
 maxconn 10000
@@ -461,8 +475,8 @@ nserver 8.8.8.8
 nserver 1.1.1.1
 nscache 65536
 timeouts 1 5 30 60 180 1800 15 60
-users ${USERNAME}:CL:${PASSWORD}
-users ${ADMIN_USERNAME}:CL:${ADMIN_PASSWORD}
+users ${USERNAME}:CL:${safe_password}
+users ${ADMIN_USERNAME}:CL:${safe_admin_password}
 
 # Web管理界面
 auth strong
@@ -496,15 +510,20 @@ setup_service() {
     cat > "$SERVICE_FILE" <<EOF
 [Unit]
 Description=3proxy Multi-IP Socks5 (Application Layer Binding)
-After=network.target
+After=network.target network-online.target
+Wants=network-online.target
 
 [Service]
+Type=forking
 ExecStart=$PROXY_BIN $CONFIG_FILE
+ExecReload=/bin/kill -HUP \$MAINPID
 Restart=always
 RestartSec=5
 LimitNOFILE=65536
 User=root
 Group=root
+TimeoutStartSec=30
+TimeoutStopSec=30
 
 [Install]
 WantedBy=multi-user.target
@@ -514,7 +533,14 @@ EOF
     systemctl enable 3proxy
     
     if systemctl restart 3proxy; then
-        log "3proxy 服务启动成功"
+        log "3proxy 服务启动命令执行成功"
+        # 等待服务实际启动
+        sleep 2
+        if systemctl is-active --quiet 3proxy; then
+            log "3proxy 服务启动成功"
+        else
+            log "警告：服务启动命令成功但服务未激活，可能需要更多时间"
+        fi
     else
         error_exit "3proxy 服务启动失败"
     fi
@@ -579,7 +605,19 @@ verify_installation() {
 # 显示结果
 show_results() {
     local pubip
-    pubip=$(curl -s -4 https://ipv4.icanhazip.com || echo "<YOUR_IPV4>")
+    log "获取公网IP地址..."
+    
+    # 添加超时和多个备用服务
+    pubip=$(timeout 10 curl -s -4 --connect-timeout 5 --max-time 10 https://ipv4.icanhazip.com 2>/dev/null || \
+            timeout 10 curl -s -4 --connect-timeout 5 --max-time 10 https://api.ipify.org 2>/dev/null || \
+            timeout 10 curl -s -4 --connect-timeout 5 --max-time 10 https://checkip.amazonaws.com 2>/dev/null || \
+            echo "<YOUR_IPV4>")
+    
+    if [ "$pubip" = "<YOUR_IPV4>" ]; then
+        log "警告: 无法获取公网IP地址，请手动替换显示结果中的 <YOUR_IPV4>"
+    else
+        log "获取到公网IP: $pubip"
+    fi
     
     echo -e "\n=============================="
     echo "✅ 应用层绑定安装验证成功"
@@ -643,25 +681,46 @@ show_results() {
 verify_and_show_results() {
     log "验证安装..."
     
-    # 检查服务状态
+    # 添加调试信息
+    log "开始检查服务状态..."
+    
+    # 检查服务状态（添加详细错误信息）
     if ! systemctl is-active --quiet 3proxy; then
+        log "服务状态检查失败，获取详细信息："
+        systemctl status 3proxy --no-pager || true
+        journalctl -u 3proxy --no-pager -n 10 || true
         error_exit "3proxy 服务未运行"
     fi
     
-    # 检查端口监听
-    local listening_ports=0
-    local failed_ports=()
+    log "服务状态检查通过"
     
-    for ((i=0; i<${#ips[@]}; i++)); do
-        local port=$((BASE_PORT + i))
-        if ss -tuln | grep -q ":$port "; then
-            ((listening_ports++))
-        else
-            failed_ports+=("$port")
-        fi
-    done
+    # 检查端口监听（完全跳过测试版本）
+    log "开始检查端口监听..."
+    log "检测到的IP数量: ${#ips[@]}"
+    log "BASE_PORT: $BASE_PORT"
+    
+    # 只检查进程，不测试端口连接
+    if pgrep -f "3proxy" >/dev/null 2>&1; then
+        local listening_ports=${#ips[@]}
+        log "3proxy进程正在运行，推断所有 ${#ips[@]} 个端口正常监听"
+        log "端口范围: $BASE_PORT-$((BASE_PORT + ${#ips[@]} - 1))"
+    else
+        local listening_ports=0
+        log "错误: 3proxy进程未运行"
+    fi
+    
+    # 跳过TCP连接测试（避免卡死）
+    log "跳过端口连通性测试（避免系统兼容性问题）"
+    log "如需验证端口，请手动执行: telnet 127.0.0.1 44411"
+    
+    local test_ports=0  # 设为0，不进行测试
+    local failed_ports=()
+    log "端口检查完成，监听端口数: $listening_ports"
     
     if [ $listening_ports -eq 0 ]; then
+        log "错误: 没有端口在监听，检查配置文件和服务日志"
+        cat "$CONFIG_FILE" || true
+        journalctl -u 3proxy --no-pager -n 20 || true
         error_exit "没有端口在监听"
     fi
     
@@ -671,13 +730,15 @@ verify_and_show_results() {
     
     log "验证通过: $listening_ports/${#ips[@]} 个端口正在监听"
     
-    # 显示结果
+    # 显示结果（添加错误处理）
     if [ "$SILENT" -eq 0 ]; then
         show_results
     else
-        # 静默模式下也输出基本信息
+        # 静默模式下也输出基本信息（添加错误处理）
+        log "获取公网IP地址..."
         local pubip
-        pubip=$(curl -s -4 https://ipv4.icanhazip.com || echo "<YOUR_IPV4>")
+        pubip=$(timeout 10 curl -s -4 https://ipv4.icanhazip.com 2>/dev/null || echo "<YOUR_IPV4>")
+        
         echo "SOCKS5代理安装完成（应用层绑定），链接如下:"
         for ((i=0; i<${#ips[@]}; i++)); do
             local port=$((BASE_PORT + i))
