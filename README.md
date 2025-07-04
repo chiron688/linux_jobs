@@ -16,7 +16,7 @@
 
 tiktok 解锁检测：
 ```shell
- bash <(curl -L -s raw.githubusercontent.com/chiron688/linux_jobs/main/tiktok.sh)
+ bash <(curl -L -s raw.githubusercontent.com/chiron688/linux_jobs/main/checktiktokregion.sh)
 ```
 
 iepl 路由一键脚本
