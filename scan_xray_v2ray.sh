@@ -1,96 +1,82 @@
 #!/usr/bin/env bash
-# 扫描所有“运行中”的 KVM 虚拟机，若来宾内存在 xray/v2ray 进程，则输出 VMID
-# 依赖：PVE qm CLI；来宾内安装并运行 QEMU Guest Agent（且在 VM 选项中启用）
+# ---------------------------------------------------------
+#  scan_xray_v2ray.sh
+#  扫描所有运行中的 KVM 虚拟机，如果检测到 xray / v2ray / v2ray-plugin 等相关进程，
+#  输出 VMID 以及命中进程行。
+#
+#  依赖：Proxmox VE qm CLI + QEMU Guest Agent（需在 VM 内安装并启用）
+# ---------------------------------------------------------
 
-set -euo pipefail
+set -eo pipefail
 
-# 探测 qm 是否支持 --output-format=json
-if qm guest exec --help 2>/dev/null | grep -q -- '--output-format'; then
-  QME_JSON=1
-else
-  QME_JSON=0
+# 获取所有运行中的 VMID
+VMS=$(qm list | awk 'NR>1 && $3=="running"{print $1}')
+
+if [ -z "$VMS" ]; then
+  echo "没有运行中的 KVM 虚拟机。"
+  exit 0
 fi
 
-# 获取运行中的 KVM VMID 列表
-mapfile -t RUNNING_VMS < <(qm list | awk 'NR>1 && $3=="running"{print $1}')
-((${#RUNNING_VMS[@]})) || { echo "没有运行中的 KVM 虚拟机。"; exit 0; }
+echo "正在扫描 $(wc -w <<<"$VMS") 台运行中的虚拟机……" >&2
 
-echo "正在扫描 ${#RUNNING_VMS[@]} 台运行中的虚拟机……" >&2
+F=0
 
-guest_exec_start() {
-  local vmid="$1"; shift
-  local out
-  if (( QME_JSON )); then
-    if ! out=$(qm guest exec "$vmid" --output-format=json -- "$@" 2>&1); then
-      echo "ERR:$out"
-      return 1
-    fi
-    echo "$out" | sed -n 's/.*"pid"[[:space:]]*:[[:space:]]*\([0-9]\+\).*/\1/p'
+for v in $VMS; do
+  # 在虚拟机内执行 ps 过滤
+  o=$(qm guest exec "$v" -- /bin/sh -lc \
+    'ps -eo pid,comm,args | awk "BEGIN{IGNORECASE=1} /(xray|v2ray|v2ray-plugin)/ && !/(grep|sh -lc|ps -eo|qm guest exec)/ {print}" | head -n 50' \
+    2>&1 || true)
+
+  code=""
+  out=""
+
+  # 兼容不同版本 qm guest exec 输出
+  if echo "$o" | grep -q '"pid"'; then
+    pid=$(echo "$o" | grep -o '"pid"[[:space:]]*:[[:space:]]*[0-9]\+' | grep -o '[0-9]\+')
+    s=$(qm guest exec-status "$v" "$pid" 2>/dev/null || true)
+    for i in $(seq 1 80); do
+      echo "$s" | grep -q 'exited:[[:space:]]*true' && break
+      sleep 0.25
+      s=$(qm guest exec-status "$v" "$pid" 2>/dev/null || true)
+    done
+    code=$(echo "$s" | grep -o 'exitcode:[[:space:]]*[-0-9]\+' | awk -F: '{print $2}' | tr -d '\r \t')
+    out=$(echo "$s" | sed -n 's/.*out-data:[[:space:]]*\(.*\)$/\1/p' | sed 's/\\n/\n/g; s/\\"/"/g')
+
+  elif echo "$o" | grep -q '"exited"'; then
+    # 同步 JSON 直接返回
+    code=$(echo "$o" | grep -o '"exitcode"[[:space:]]*:[[:space:]]*[-0-9]\+' | awk -F: '{print $2}' | tr -d '\r \t')
+    out=$(echo "$o" | sed -n 's/.*"out-data"[[:space:]]*:[[:space:]]*"\(.*\)".*/\1/p' | sed 's/\\n/\n/g; s/\\"/"/g')
+
+  elif echo "$o" | grep -q 'PID[[:space:]]*:'; then
+    # 老版文本输出
+    pid=$(echo "$o" | grep -o 'PID[[:space:]]*:[[:space:]]*[0-9]\+' | grep -o '[0-9]\+')
+    s=$(qm guest exec-status "$v" "$pid" 2>/dev/null || true)
+    for i in $(seq 1 80); do
+      echo "$s" | grep -q 'exited:[[:space:]]*true' && break
+      sleep 0.25
+      s=$(qm guest exec-status "$v" "$pid" 2>/dev/null || true)
+    done
+    code=$(echo "$s" | grep -o 'exitcode:[[:space:]]*[-0-9]\+' | awk -F: '{print $2}' | tr -d '\r \t')
+    out=$(echo "$s" | sed -n 's/.*out-data:[[:space:]]*\(.*\)$/\1/p' | sed 's/\\n/\n/g; s/\\"/"/g')
+
   else
-    if ! out=$(qm guest exec "$vmid" -- "$@" 2>&1); then
-      echo "ERR:$out"
-      return 1
-    fi
-    # 常见老版输出形态示例： "PID: 1234"
-    echo "$out" | sed -n 's/.*PID[[:space:]]*:[[:space:]]*\([0-9]\+\).*/\1/p'
-  fi
-}
-
-guest_exec_wait() {
-  local vmid="$1" pid="$2" timeout="${3:-10}"
-  local start_ts=$(date +%s)
-  while :; do
-    local st
-    if (( QME_JSON )); then
-      st=$(qm guest exec-status "$vmid" "$pid" --output-format=json 2>/dev/null || true)
-      [[ -z "$st" ]] && echo "124" && return 0
-      local exited=$(echo "$st" | sed -n 's/.*"exited"[[:space:]]*:[[:space:]]*\(true\|false\).*/\1/p')
-      if [[ "$exited" == "true" ]]; then
-        echo "$(echo "$st" | sed -n 's/.*"exitcode"[[:space:]]*:[[:space:]]*\(-\{0,1\}[0-9]\+\).*/\1/p')"
-        return 0
-      fi
+    # 未启用 Guest Agent 或异常
+    if echo "$o" | grep -qi "guest agent"; then
+      echo "WARN: VM $v 未启用或未运行 QEMU Guest Agent（跳过）" >&2
     else
-      st=$(qm guest exec-status "$vmid" "$pid" 2>/dev/null || true)
-      [[ -z "$st" ]] && echo "124" && return 0
-      # 老版常见输出行：exited: true / exitcode: 0
-      local exited=$(echo "$st" | awk -F': ' '/^[[:space:]]*exited:/ {print $2}' | tr -d '\r')
-      if [[ "$exited" == "true" ]]; then
-        echo "$(echo "$st" | awk -F': ' '/^[[:space:]]*exitcode:/ {print $2}' | tr -d '\r')"
-        return 0
-      fi
+      echo "WARN: VM $v 执行 guest exec 失败（跳过）：$o" >&2
     fi
-    (( $(date +%s) - start_ts >= timeout )) && { echo "124"; return 0; }
-    sleep 0.3
-  done
-}
-
-FOUND=0
-for VMID in "${RUNNING_VMS[@]}"; do
-  # 在来宾执行：找到任一即返回 0，否则返回 1
-  # 说明：尽量避免依赖 bash 特性，使用 /bin/sh -lc 以最大兼容
-  CMD=(/bin/sh -lc 'pgrep -fa -x xray >/dev/null || pgrep -fa -x v2ray >/dev/null || pgrep -fa "xray|v2ray" >/dev/null')
-
-  PID=$(guest_exec_start "$VMID" "${CMD[@]}") || {
-    err="${PID#ERR:}"
-    if echo "$err" | grep -qi "guest agent"; then
-      echo "WARN: VM $VMID 未启用或未运行 QEMU Guest Agent（跳过）" >&2
-    else
-      echo "WARN: VM $VMID 执行 guest exec 失败（跳过）：$err" >&2
-    fi
-    continue
-  }
-
-  if [[ -z "$PID" ]]; then
-    echo "WARN: VM $VMID 无法获取 exec PID（可能不支持该命令或 agent 异常），跳过。" >&2
     continue
   fi
 
-  EXITCODE=$(guest_exec_wait "$VMID" "$PID" 10)
-  # 0 = 命中进程
-  if [[ "$EXITCODE" == "0" ]]; then
-    ((FOUND++))
-    echo "$VMID"
+  # 输出结果
+  if [ "${code:-1}" = "0" ] && [ -n "${out:-}" ]; then
+    F=$((F+1))
+    echo "$v"
+    echo "$out" | sed 's/^/> /'
   fi
 done
 
-(( FOUND > 0 )) || echo "未在任何运行中的虚拟机内发现 xray/v2ray 进程。"
+if [ "$F" -eq 0 ]; then
+  echo "未在任何运行中的虚拟机内发现 xray/v2ray 相关进程（含 xray-amd64/xray-linux/v2ray-plugin 等）。"
+fi
