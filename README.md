@@ -14,6 +14,12 @@
  bash <(curl -L -s raw.githubusercontent.com/chiron688/linux_jobs/main/socks5_3proxy.sh)
 ```
 
+
+检测虚拟机是否包含违规进程：
+```shell
+ bash <(curl -L -s raw.githubusercontent.com/chiron688/linux_jobs/main/scan_xray_v2ray.sh)
+```
+
 tiktok 解锁检测：
 ```shell
  bash <(curl -L -s raw.githubusercontent.com/chiron688/linux_jobs/main/checktiktokregion.sh)
