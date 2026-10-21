@@ -94,18 +94,20 @@ MediaUnlockTest_Tiktok_Region() {
         return
     fi
 
-    local geoCity region city geoname region_code
+    local geoCity region city geoname region_code subdivision
     geoCity=$(safe_jq "$embedded_json" '.geoCity // empty')
-    region=$(safe_jq  "$geoCity" '.Subdivisions // empty')
-    city=$(safe_jq    "$geoCity" '.City // empty')
-    geoname=$(safe_jq "$geoCity" '.OriginalSubdivisions?[0].GeoNameID // empty')
-    [ -z "$region" ]  && region=$(safe_jq "$embedded_json" '.. | .subdivisions?[0] // empty' | head -n1)
-    [ -z "$city" ]    && city=$(safe_jq   "$embedded_json" '.. | .City? // empty' | head -n1)
-    [ -z "$geoname" ] && geoname=$(safe_jq "$embedded_json" '.. | .geo?[0] // empty' | head -n1)
+    subdivision=$(safe_jq "$geoCity" '.Subdivisions // empty')
+    city=$(safe_jq      "$geoCity" '.City // empty')
+    geoname=$(safe_jq   "$geoCity" '.OriginalSubdivisions?[0].GeoNameID // empty')
+    [ -z "$subdivision" ] && subdivision=$(safe_jq "$embedded_json" '.. | .subdivisions?[0] // empty' | head -n1)
+    [ -z "$city" ]      && city=$(safe_jq   "$embedded_json" '.. | .City? // empty' | head -n1)
+    [ -z "$geoname" ]   && geoname=$(safe_jq "$embedded_json" '.. | .geo?[0] // empty' | head -n1)
     region_code=$(safe_jq "$embedded_json" '.. | .region? // empty' | head -n1)
 
-    if [[ -n "$region" || -n "$city" || -n "$geoname" || -n "$region_code" ]]; then
-        echo "{\"status\":\"Success\",\"Region\":\"${region:-$region_code}\",\"City\":\"${city:-}\",\"GeoID\":\"${geoname:-}\",\"Country\":\"${region_code:-}\"}"
+    # Region 输出两位国家码（调用方 query.py 将其映射为 tiktok_country_code），
+    # 省份名放 Subdivision，GeoID 供调用方用 geonames 库反查经纬度/时区
+    if [[ -n "$region_code" || -n "$city" || -n "$geoname" ]]; then
+        echo "{\"status\":\"Success\",\"Region\":\"${region_code:-Unknown}\",\"City\":\"${city:-}\",\"GeoID\":\"${geoname:-}\",\"Subdivision\":\"${subdivision:-}\"}"
     else
         echo '{"status":"Failed","reason":"Region or City not found","curl_exit":0}'
     fi
